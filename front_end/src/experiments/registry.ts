@@ -20,6 +20,15 @@ export const EXPERIMENTS: ExperimentMeta[] = [
     status: "live",
   },
   {
+    id: "reactflow",
+    title: "React Flow",
+    tagline:
+      "Node graphs with a hand-built stage node, live selection inspector and persisted layout.",
+    route: "#/reactflow",
+    tags: ["XYFlow 12", "custom nodes", "inspector"],
+    status: "live",
+  },
+  {
     id: "own-block-editor",
     title: "Mini block editor from scratch",
     tagline:

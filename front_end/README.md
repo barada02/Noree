@@ -15,9 +15,10 @@ Then open http://localhost:5173 in a browser.
 
 ## Experiments
 
-| #   | Name              | Route        | State |
-| --- | ----------------- | ------------ | ----- |
+| #   | Name              | Route         | State |
+| --- | ----------------- | ------------- | ----- |
 | 01  | BlockNote editor  | `#/blocknote` | live  |
+| 02  | React Flow        | `#/reactflow` | live  |
 
 Queued: mini block editor from scratch, virtualized 100k rows, Suspense data
 fetching. See `src/experiments/registry.ts`.
