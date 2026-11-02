@@ -1,32 +1,36 @@
-# React + TypeScript + Vite
+# Noree · React Lab
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A workbench for experiments with React-adjacent tech. Each experiment
+integrates one thing properly — and where it's feasible, we build our own
+version to compare.
 
-Currently, two official plugins are available:
+## Run
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```sh
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Then open http://localhost:5173 in a browser.
+
+## Experiments
+
+| #   | Name              | Route        | State |
+| --- | ----------------- | ------------ | ----- |
+| 01  | BlockNote editor  | `#/blocknote` | live  |
+
+Queued: mini block editor from scratch, virtualized 100k rows, Suspense data
+fetching. See `src/experiments/registry.ts`.
+
+## Add an experiment
+
+1. Create `src/experiments/<name>/`
+2. Register it in `src/experiments/registry.ts`
+3. Add its route in `src/App.tsx`
+
+## Checks
+
+```sh
+npm run lint   # oxlint
+npm run build  # tsc + vite build
+```
