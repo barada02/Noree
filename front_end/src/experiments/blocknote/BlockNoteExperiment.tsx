@@ -1,5 +1,6 @@
 import { useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/shadcn";
+import "@blocknote/shadcn/style.css";
 import { useEffect, useState } from "react";
 import { useTheme } from "../../useTheme";
 import { STARTER_DOC } from "./initialContent";
