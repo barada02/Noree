@@ -49,6 +49,7 @@ export default function Camera() {
   const [status, setStatus] = useState<Status>("connecting");
   const [pairUrl, setPairUrl] = useState<string | null>(null);
   const [hasFrame, setHasFrame] = useState(false);
+  const [frameSize, setFrameSize] = useState({ w: 4, h: 3 });
   const [config, setConfig] = useState<CameraConfig>(DEFAULT_CONFIG);
   const [recv, setRecv] = useState({ fps: 0, kbps: 0 });
   const [phone, setPhone] = useState<PhoneStats | null>(null);
@@ -100,8 +101,11 @@ export default function Camera() {
         const bitmap = await createImageBitmap(new Blob([buf]));
         const canvas = canvasRef.current;
         if (canvas) {
-          if (canvas.width !== bitmap.width) canvas.width = bitmap.width;
-          if (canvas.height !== bitmap.height) canvas.height = bitmap.height;
+          if (canvas.width !== bitmap.width || canvas.height !== bitmap.height) {
+            canvas.width = bitmap.width;
+            canvas.height = bitmap.height;
+            setFrameSize({ w: bitmap.width, h: bitmap.height });
+          }
           canvas.getContext("2d")?.drawImage(bitmap, 0, 0);
         }
         bitmap.close();
@@ -299,22 +303,40 @@ export default function Camera() {
           </aside>
 
           <div>
-            <div className="relative grid aspect-video place-items-center overflow-hidden rounded-lg border border-white/20 bg-white/5">
-              <canvas
-                ref={canvasRef}
-                className={hasFrame ? "h-full w-full object-contain" : "hidden"}
-              />
-              {!hasFrame && (
-                <span className="font-mono text-xs text-white/40">
-                  No frames yet
-                </span>
-              )}
+            {/* Same shape as the phone's green frame, as large as fits. */}
+            <div className="@container w-full">
+              <div
+                className="mx-auto grid place-items-center overflow-hidden rounded-lg border border-white/20 bg-white/5"
+                style={{
+                  aspectRatio: hasFrame
+                    ? `${frameSize.w} / ${frameSize.h}`
+                    : "16 / 9",
+                  width: hasFrame
+                    ? `min(100cqw, calc(75vh * ${frameSize.w / frameSize.h}))`
+                    : "100%",
+                }}
+              >
+                <canvas
+                  ref={canvasRef}
+                  className={hasFrame ? "h-full w-full" : "hidden"}
+                />
+                {!hasFrame && (
+                  <span className="font-mono text-xs text-white/40">
+                    No frames yet
+                  </span>
+                )}
+              </div>
             </div>
             <dl className="mt-4 grid grid-cols-2 gap-3 font-mono text-xs sm:grid-cols-4">
               {[
                 ["Received", `${recv.fps} fps`],
                 ["Bandwidth", `${recv.kbps} kbps`],
-                ["Frame size", phone ? `${phone.kb} KB` : "–"],
+                [
+                  "Frame",
+                  hasFrame
+                    ? `${frameSize.w}×${frameSize.h}${phone ? ` · ${phone.kb} KB` : ""}`
+                    : "–",
+                ],
                 ["Phone → server", phone ? `${phone.rtt} ms` : "–"],
                 ["Phone sent", phone ? `${phone.sent} fps` : "–"],
                 ["Skipped", phone ? `${phone.dropped}/s` : "–"],

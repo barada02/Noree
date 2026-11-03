@@ -73,6 +73,9 @@ export default function Cam() {
   const [torchOn, setTorchOn] = useState(false);
   const [config, setConfig] = useState<CameraConfig>(DEFAULT_CONFIG);
   const [live, setLive] = useState({ fps: 0, rtt: 0, kb: 0, dropped: 0 });
+  const [size, setSize] = useState({ w: 0, h: 0 });
+  // Shape of the camera image; the preview box is drawn in exactly this shape.
+  const [aspect, setAspect] = useState(3 / 4);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -191,6 +194,8 @@ export default function Cam() {
     let timer = 0;
     let encoding = false;
     let lastSendAt = 0;
+    let sentW = 0;
+    let sentH = 0;
     const window1s = { sent: 0, dropped: 0, bytes: 0, rttSum: 0, acks: 0 };
 
     const tick = () => {
@@ -217,6 +222,8 @@ export default function Cam() {
           canvas.width = Math.round(video.videoWidth * scale);
           canvas.height = Math.round(video.videoHeight * scale);
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          sentW = canvas.width;
+          sentH = canvas.height;
 
           encoding = true;
           canvas.toBlob(
@@ -261,6 +268,9 @@ export default function Cam() {
         kb: w.sent ? Math.round(w.bytes / w.sent / 1024) : 0,
       };
       setLive(next);
+      setSize((prev) =>
+        prev.w === sentW && prev.h === sentH ? prev : { w: sentW, h: sentH },
+      );
       socketRef.current?.volatile.emit("stats", {
         sent: next.fps,
         dropped: next.dropped,
@@ -276,6 +286,21 @@ export default function Cam() {
       window.clearInterval(reporter);
     };
   }, [phase]);
+
+  // Keep the preview box the same shape as the camera image (also after a flip/rotate).
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const update = () => {
+      if (video.videoWidth > 0) setAspect(video.videoWidth / video.videoHeight);
+    };
+    video.addEventListener("loadedmetadata", update);
+    video.addEventListener("resize", update);
+    return () => {
+      video.removeEventListener("loadedmetadata", update);
+      video.removeEventListener("resize", update);
+    };
+  }, []);
 
   // The wake lock is released when the tab is hidden; take it back on return.
   useEffect(() => {
@@ -336,17 +361,10 @@ export default function Cam() {
   const streaming = phase === "streaming";
 
   return (
-    <div className="fixed inset-0 h-dvh overflow-hidden bg-black text-white">
-      <video
-        ref={videoRef}
-        playsInline
-        muted
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-
+    <div className="fixed inset-0 flex h-dvh flex-col overflow-hidden bg-black text-white">
       {streaming && (
-        <>
-          <div className="absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-6 font-mono text-xs">
+        <div className="shrink-0 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2 font-mono text-xs">
+          <div className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <span
                 className={`h-2.5 w-2.5 rounded-full ${
@@ -360,25 +378,51 @@ export default function Cam() {
               {live.dropped > 0 && ` · ${live.dropped} skipped`}
             </span>
           </div>
+          <p className="mt-1 text-white/50">
+            Green frame = exactly what your laptop sees
+            {size.w > 0 && ` · ${size.w}×${size.h}`}
+          </p>
+        </div>
+      )}
 
-          <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-5 bg-gradient-to-t from-black/60 to-transparent px-4 pt-8 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-            <IconButton label="Flip camera" onClick={flip}>
-              Flip
+      {/* The box has the camera image's exact shape and fits inside the free space. */}
+      <div className="relative min-h-0 flex-1" style={{ containerType: "size" }}>
+        <div
+          className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-2 ${
+            streaming ? "border-emerald-400" : "border-transparent"
+          }`}
+          style={{
+            aspectRatio: String(aspect),
+            width: `min(100cqw, calc(100cqh * ${aspect}))`,
+          }}
+        >
+          <video
+            ref={videoRef}
+            playsInline
+            muted
+            className="h-full w-full object-fill"
+          />
+        </div>
+      </div>
+
+      {streaming && (
+        <div className="flex shrink-0 items-center justify-center gap-5 px-4 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          <IconButton label="Flip camera" onClick={flip}>
+            Flip
+          </IconButton>
+          <IconButton
+            label={paused ? "Resume streaming" : "Pause streaming"}
+            active={paused}
+            onClick={togglePause}
+          >
+            {paused ? "Resume" : "Pause"}
+          </IconButton>
+          {torchSupported && (
+            <IconButton label="Torch" active={torchOn} onClick={toggleTorch}>
+              Light
             </IconButton>
-            <IconButton
-              label={paused ? "Resume streaming" : "Pause streaming"}
-              active={paused}
-              onClick={togglePause}
-            >
-              {paused ? "Resume" : "Pause"}
-            </IconButton>
-            {torchSupported && (
-              <IconButton label="Torch" active={torchOn} onClick={toggleTorch}>
-                Light
-              </IconButton>
-            )}
-          </div>
-        </>
+          )}
+        </div>
       )}
 
       {!streaming && (
