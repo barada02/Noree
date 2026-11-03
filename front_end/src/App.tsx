@@ -1,5 +1,7 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import Shell from "./components/Shell";
+import Cam from "./pages/Cam";
+import Camera from "./pages/Camera";
 import Glyph from "./pages/Glyph";
 import Home from "./pages/Home";
 import Landing from "./pages/Landing";
@@ -41,6 +43,21 @@ function App() {
     return (
       <ThemeProvider>
         <Yjs />
+      </ThemeProvider>
+    );
+  }
+
+  if (route === "camera") {
+    return (
+      <ThemeProvider>
+        <Camera />
+      </ThemeProvider>
+    );
+  }
+  if (route === "cam") {
+    return (
+      <ThemeProvider>
+        <Cam />
       </ThemeProvider>
     );
   }

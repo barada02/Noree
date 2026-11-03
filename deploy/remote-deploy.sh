@@ -22,6 +22,26 @@ mkdir -p "$API_DIR"
 rm -rf "$API_DIR/dist"
 tar -xzf "$TMP/backend.tgz" -C "$API_DIR"
 chown -R "$APP_USER":"$APP_USER" "$API_DIR"
+# nginx: WebSocket upgrade for /api/ (Socket.IO). The site conf is certbot-managed,
+# so patch it in place; idempotent, and reverted if nginx rejects the result.
+NGINX_CONF=/etc/nginx/conf.d/noree.conf
+cat > /etc/nginx/conf.d/noree-ws-map.conf <<'EOF'
+map $http_upgrade $connection_upgrade {
+  default upgrade;
+  ''      close;
+}
+EOF
+if ! grep -q 'connection_upgrade' "$NGINX_CONF"; then
+  cp "$NGINX_CONF" "$NGINX_CONF.bak"
+  sed -i '/location \/api\/ {/,/}/ s|proxy_http_version 1.1;|&\n    proxy_set_header Upgrade $http_upgrade;\n    proxy_set_header Connection $connection_upgrade;\n    proxy_read_timeout 3600s;\n    proxy_send_timeout 3600s;|' "$NGINX_CONF"
+  if nginx -t; then
+    systemctl reload nginx
+  else
+    mv "$NGINX_CONF.bak" "$NGINX_CONF"
+    echo "nginx WebSocket patch rejected; reverted" >&2
+  fi
+fi
+
 sudo -iu "$APP_USER" bash -c "cd $API_DIR && npm ci --omit=dev && pm2 startOrReload ecosystem.config.cjs --update-env && pm2 save"
 
 # Health check through nginx
