@@ -67,9 +67,9 @@ export default function Shell({
         </div>
         <nav className="flex gap-1 overflow-x-auto px-4 pb-3">
           <a
-            href="#/"
+            href="#/experiments"
             className={`rounded-md px-3 py-1.5 text-sm whitespace-nowrap ${
-              route === "" ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900" : ""
+              route === "experiments" ?"bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900" : ""
             }`}
           >
             Overview
@@ -103,9 +103,9 @@ export default function Shell({
         </p>
         <nav className="mt-6 flex-1 space-y-0.5 px-3">
           <a
-            href="#/"
+            href="#/experiments"
             className={`block rounded-md px-3 py-1.5 text-sm ${
-              route === ""
+              route === "experiments"
                 ? "bg-stone-100 font-medium dark:bg-stone-800"
                 : "text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800"
             }`}

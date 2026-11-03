@@ -1,6 +1,9 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import Shell from "./components/Shell";
+import Glyph from "./pages/Glyph";
 import Home from "./pages/Home";
+import Landing from "./pages/Landing";
+import Yjs from "./pages/Yjs";
 import { ThemeProvider } from "./theme";
 
 const BlockNoteExperiment = lazy(
@@ -18,10 +21,37 @@ function App() {
   const [route, setRoute] = useState(routeFromHash);
 
   useEffect(() => {
-    const onHashChange = () => setRoute(routeFromHash());
+    const onHashChange = () => {
+      setRoute(routeFromHash());
+      window.scrollTo(0, 0);
+    };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
+
+  // Standalone pages (no experiment sidebar)
+  if (route === "") {
+    return (
+      <ThemeProvider>
+        <Landing />
+      </ThemeProvider>
+    );
+  }
+  if (route === "yjs") {
+    return (
+      <ThemeProvider>
+        <Yjs />
+      </ThemeProvider>
+    );
+  }
+
+  if (route === "glyph") {
+    return (
+      <ThemeProvider>
+        <Glyph />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider>
