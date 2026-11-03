@@ -7,8 +7,8 @@ set -euo pipefail
 
 REGION=us-east-1
 INSTANCE_ID=i-027dcf808e037b3b5
-GITHUB_REPO=barada02/Noree
-GITHUB_ENV=production
+# GitHub's OIDC subject embeds the owner and repo IDs: repo:<owner>@<id>/<repo>@<id>:environment:<env>
+GITHUB_SUB="repo:barada02@159304187/Noree@1443984021:environment:production"
 
 ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
 BUCKET="noree-deploy-$ACCOUNT"
@@ -70,7 +70,7 @@ TRUST="{
     \"Condition\":{
       \"StringEquals\":{
         \"token.actions.githubusercontent.com:aud\":\"sts.amazonaws.com\",
-        \"token.actions.githubusercontent.com:sub\":\"repo:$GITHUB_REPO:environment:$GITHUB_ENV\"}}}]}"
+        \"token.actions.githubusercontent.com:sub\":\"$GITHUB_SUB\"}}}]}"
 
 if aws iam get-role --role-name "$GH_ROLE" >/dev/null 2>&1; then
   aws iam update-assume-role-policy --role-name "$GH_ROLE" --policy-document "$TRUST"
