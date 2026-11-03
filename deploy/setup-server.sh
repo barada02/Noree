@@ -25,6 +25,13 @@ sudo chown "$USER":"$USER" /var/www/noree
 
 sudo rm -f /etc/nginx/sites-enabled/default
 
+sudo tee /etc/nginx/conf.d/noree-ws-map.conf >/dev/null <<'EOF'
+map $http_upgrade $connection_upgrade {
+  default upgrade;
+  ''      close;
+}
+EOF
+
 # Written once: certbot edits this file later, so never overwrite it on a re-run.
 NGINX_CONF=/etc/nginx/conf.d/noree.conf
 if [ ! -f "$NGINX_CONF" ]; then
@@ -40,6 +47,11 @@ server {
   location /api/ {
     proxy_pass http://127.0.0.1:3000/;
     proxy_http_version 1.1;
+    # WebSocket upgrade (Socket.IO); $connection_upgrade comes from noree-ws-map.conf
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_read_timeout 3600s;
+    proxy_send_timeout 3600s;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
