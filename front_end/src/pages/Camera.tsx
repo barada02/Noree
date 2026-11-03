@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { Socket } from "socket.io-client";
 import { QRCodeSVG } from "qrcode.react";
 import {
   connectCameraSocket,
@@ -13,9 +14,24 @@ export default function Camera() {
   const [frames, setFrames] = useState(0);
   const [fps, setFps] = useState(0);
   const imgRef = useRef<HTMLImageElement>(null);
+  const socketRef = useRef<Socket | null>(null);
+
+  // Dropping the socket makes the server end this laptop's sessions (and tell a
+  // paired phone), then reconnecting creates a fresh session with a new QR code.
+  const newCode = useCallback(() => {
+    const socket = socketRef.current;
+    if (!socket) return;
+    setPairUrl(null);
+    setFrames(0);
+    setFps(0);
+    setStatus("connecting");
+    if (imgRef.current) imgRef.current.removeAttribute("src");
+    socket.disconnect().connect();
+  }, []);
 
   useEffect(() => {
     const socket = connectCameraSocket();
+    socketRef.current = socket;
     let lastUrl: string | null = null;
     let recent: number[] = [];
 
@@ -105,10 +121,18 @@ export default function Camera() {
               {status === "phone-left" && "Phone disconnected. It can rejoin without rescanning."}
               {status === "error" && "Connection failed. Is the API running?"}
             </p>
+            <button
+              onClick={newCode}
+              className="mt-4 rounded-md border border-white/40 px-3 py-1.5 font-mono text-xs tracking-widest uppercase hover:bg-white hover:text-black"
+            >
+              {status === "live" || status === "phone-left"
+                ? "Disconnect · new QR"
+                : "New QR code"}
+            </button>
             {pairUrl && status === "waiting" && (
               <a
                 href={pairUrl}
-                className="mt-2 block break-all font-mono text-[10px] text-white/30 hover:text-white/60"
+                className="mt-3 block break-all font-mono text-[10px] text-white/30 hover:text-white/60"
               >
                 {pairUrl}
               </a>

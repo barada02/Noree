@@ -36,6 +36,9 @@ export default function Landing() {
           <a href="#/glyph" className="hover:underline">
             Glyph
           </a>
+          <a href="#/camera" className="hover:underline">
+            Camera
+          </a>
           <a href="#/experiments" className="hover:underline">
             Experiments
           </a>
@@ -66,6 +69,12 @@ export default function Landing() {
             className="rounded-md border border-black px-5 py-2.5 text-sm font-medium dark:border-white"
           >
             Try the canvas
+          </a>
+          <a
+            href="#/camera"
+            className="rounded-md border border-black px-5 py-2.5 text-sm font-medium dark:border-white"
+          >
+            Connect a phone camera
           </a>
         </div>
 
