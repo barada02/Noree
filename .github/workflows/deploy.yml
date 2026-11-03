@@ -1,0 +1,94 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            back_end/package-lock.json
+            front_end/package-lock.json
+
+      - name: Backend
+        working-directory: back_end
+        run: |
+          npm ci
+          npm run lint
+          npm test
+          npm run build
+
+      - name: Frontend
+        working-directory: front_end
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+
+      - name: Package release
+        if: github.event_name != 'pull_request'
+        run: |
+          mkdir release
+          tar -czf release/backend.tgz -C back_end dist package.json package-lock.json ecosystem.config.cjs
+          tar -czf release/frontend.tgz -C front_end/dist .
+          cp deploy/remote-deploy.sh release/
+
+      - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
+        with:
+          name: release
+          path: release
+
+  deploy:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+          path: release
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Upload release to S3
+        run: aws s3 cp release "s3://${{ secrets.S3_BUCKET }}/releases/${{ github.sha }}/" --recursive --only-show-errors
+
+      - name: Deploy via SSM
+        run: |
+          CMD_ID=$(aws ssm send-command \
+            --instance-ids "${{ secrets.INSTANCE_ID }}" \
+            --document-name AWS-RunShellScript \
+            --comment "deploy ${{ github.sha }}" \
+            --parameters 'commands=["aws s3 cp s3://${{ secrets.S3_BUCKET }}/releases/${{ github.sha }}/remote-deploy.sh /tmp/remote-deploy.sh --only-show-errors","bash /tmp/remote-deploy.sh ${{ secrets.S3_BUCKET }} ${{ github.sha }} ubuntu"]' \
+            --query Command.CommandId --output text)
+
+          STATUS=0
+          aws ssm wait command-executed --command-id "$CMD_ID" --instance-id "${{ secrets.INSTANCE_ID }}" || STATUS=$?
+
+          aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "${{ secrets.INSTANCE_ID }}" \
+            --query '{Status:Status,Out:StandardOutputContent,Err:StandardErrorContent}' --output yaml
+          exit $STATUS

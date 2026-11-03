@@ -2,3 +2,5 @@ hackathonDetail
 RefProjects
 
 AwsUtil
+awsutil/config.local.ps1
+*.pem
