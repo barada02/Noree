@@ -106,4 +106,44 @@ describe('Camera pairing (e2e)', () => {
     laptop.disconnect();
     await ended;
   });
+  it('applies the laptop config, clamps it, and pushes changes to the phone', async () => {
+    const laptop = await connect();
+    const created = await laptop.emitWithAck('session:create', {
+      config: { fps: 24, width: 800 },
+    });
+    expect(created.config).toMatchObject({ fps: 24, width: 800, format: 'jpeg' });
+
+    const phone = await connect();
+    const joined = await phone.emitWithAck('session:join', {
+      sessionId: created.sessionId,
+      token: created.token,
+    });
+    expect(joined.config).toMatchObject({ fps: 24, width: 800 });
+
+    const pushed = once<Record<string, unknown>>(phone, 'config');
+    const ack = await laptop.emitWithAck('config:set', { fps: 999, quality: 0.01, format: 'webp' });
+    expect(ack.config).toMatchObject({ fps: 30, quality: 0.1, format: 'webp', width: 800 });
+    expect(await pushed).toMatchObject({ fps: 30, format: 'webp' });
+  });
+
+  it('does not let a phone change the config', async () => {
+    const laptop = await connect();
+    const { sessionId, token } = await laptop.emitWithAck('session:create');
+    const phone = await connect();
+    await phone.emitWithAck('session:join', { sessionId, token });
+    expect(await phone.emitWithAck('config:set', { fps: 1 })).toEqual({ ok: false });
+  });
+
+  it('acks frames from the paired phone and relays its stats', async () => {
+    const laptop = await connect();
+    const { sessionId, token } = await laptop.emitWithAck('session:create');
+    const phone = await connect();
+    await phone.emitWithAck('session:join', { sessionId, token });
+
+    expect(await phone.emitWithAck('frame', Buffer.from([1, 2, 3]))).toBe(true);
+
+    const stats = once<Record<string, number>>(laptop, 'stats');
+    phone.emit('stats', { sent: 9, dropped: 1, rtt: 42, kb: 31 });
+    expect(await stats).toEqual({ sent: 9, dropped: 1, rtt: 42, kb: 31 });
+  });
 });

@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
+import { DEFAULT_CONFIG, type CameraConfig } from "../lib/cameraConfig";
 import { connectCameraSocket, type JoinAck } from "../lib/cameraSocket";
 
-const MAX_WIDTH = 960;
-const JPEG_QUALITY = 0.7;
-const INTERVALS = [500, 1000, 2000];
-
 type Phase = "idle" | "starting" | "streaming" | "ended" | "error";
+type TorchTrack = MediaTrackCapabilities & { torch?: boolean };
+
+// A frame is only sent while fewer than this many are awaiting the server's ack,
+// so a slow network drops frames instead of building up delay.
+const MAX_IN_FLIGHT = 2;
+const STALE_ACK_MS = 3000;
 
 function pairingParams() {
   const query = window.location.hash.split("?")[1] ?? "";
@@ -34,19 +37,50 @@ function resumeKeyStore(sessionId: string) {
   };
 }
 
+function IconButton({
+  label,
+  active,
+  onClick,
+  children,
+}: {
+  label: string;
+  active?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      aria-pressed={active}
+      className={`grid h-14 w-14 place-items-center rounded-full text-xs font-medium backdrop-blur ${
+        active ? "bg-white text-black" : "bg-black/50 text-white"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function Cam() {
   const { sessionId, token } = pairingParams();
   const [phase, setPhase] = useState<Phase>("idle");
   const [message, setMessage] = useState("");
-  const [sent, setSent] = useState(0);
-  const [intervalMs, setIntervalMs] = useState(1000);
-  const [facing, setFacing] = useState<"environment" | "user">("environment");
   const [online, setOnline] = useState(true);
+  const [paused, setPaused] = useState(false);
+  const [facing, setFacing] = useState<"environment" | "user">("environment");
+  const [torchSupported, setTorchSupported] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
+  const [config, setConfig] = useState<CameraConfig>(DEFAULT_CONFIG);
+  const [live, setLive] = useState({ fps: 0, rtt: 0, kb: 0, dropped: 0 });
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const socketRef = useRef<Socket | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const configRef = useRef(config);
+  const pausedRef = useRef(false);
+  const inFlightRef = useRef(0);
 
   const requestWakeLock = useCallback(async () => {
     try {
@@ -56,21 +90,46 @@ export default function Cam() {
     }
   }, []);
 
-  const openCamera = useCallback(async (facingMode: "environment" | "user") => {
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: facingMode },
-        width: { ideal: 1280 },
-      },
-      audio: false,
-    });
-    streamRef.current = stream;
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream;
-      await videoRef.current.play();
+  // Ask the camera for the width the laptop chose; frames are downscaled from it.
+  const applyCaptureWidth = useCallback(async (cfg: CameraConfig) => {
+    const track = streamRef.current?.getVideoTracks()[0];
+    try {
+      await track?.applyConstraints({ width: { ideal: cfg.captureWidth } });
+    } catch {
+      // some devices refuse; keep whatever resolution we have
     }
   }, []);
+
+  const applyConfig = useCallback(
+    (cfg: CameraConfig) => {
+      configRef.current = cfg;
+      setConfig(cfg);
+      void applyCaptureWidth(cfg);
+    },
+    [applyCaptureWidth],
+  );
+
+  const openCamera = useCallback(
+    async (facingMode: "environment" | "user") => {
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: facingMode },
+          width: { ideal: configRef.current.captureWidth },
+        },
+        audio: false,
+      });
+      streamRef.current = stream;
+      const track = stream.getVideoTracks()[0];
+      setTorchSupported(Boolean((track?.getCapabilities?.() as TorchTrack)?.torch));
+      setTorchOn(false);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+    },
+    [],
+  );
 
   const start = async () => {
     if (!sessionId) return;
@@ -92,6 +151,7 @@ export default function Cam() {
 
     // Runs on first connect and on every automatic reconnect.
     socket.on("connect", async () => {
+      inFlightRef.current = 0;
       setOnline(true);
       const resumeKey = store.get();
       const res = (await socket.emitWithAck("session:join", {
@@ -109,9 +169,11 @@ export default function Cam() {
         return;
       }
       store.set(res.resumeKey);
+      applyConfig(res.config);
       setPhase("streaming");
       void requestWakeLock();
     });
+    socket.on("config", applyConfig);
     socket.on("disconnect", () => setOnline(false));
     socket.on("session:ended", () => {
       setMessage("The laptop ended the session.");
@@ -120,41 +182,100 @@ export default function Cam() {
     });
   };
 
-  // Capture loop: grab a frame, downscale, JPEG-encode, send.
+  // Capture loop. Reads the live config every tick, so laptop tweaks apply instantly.
   useEffect(() => {
     if (phase !== "streaming") return;
     const canvas = document.createElement("canvas");
-    let busy = false;
+    const ctx = canvas.getContext("2d");
+    let stopped = false;
+    let timer = 0;
+    let encoding = false;
+    let lastSendAt = 0;
+    const window1s = { sent: 0, dropped: 0, bytes: 0, rttSum: 0, acks: 0 };
 
-    const timer = window.setInterval(() => {
+    const tick = () => {
+      if (stopped) return;
+      const cfg = configRef.current;
       const video = videoRef.current;
       const socket = socketRef.current;
-      if (busy || !video || !socket?.connected || video.videoWidth === 0) return;
+      const began = performance.now();
 
-      const scale = Math.min(1, MAX_WIDTH / video.videoWidth);
-      canvas.width = Math.round(video.videoWidth * scale);
-      canvas.height = Math.round(video.videoHeight * scale);
-      canvas.getContext("2d")?.drawImage(video, 0, 0, canvas.width, canvas.height);
+      if (
+        !pausedRef.current &&
+        video &&
+        ctx &&
+        socket?.connected &&
+        video.videoWidth > 0
+      ) {
+        if (inFlightRef.current > 0 && began - lastSendAt > STALE_ACK_MS) {
+          inFlightRef.current = 0; // lost ack (e.g. dropped connection)
+        }
+        if (encoding || inFlightRef.current >= MAX_IN_FLIGHT) {
+          window1s.dropped++;
+        } else {
+          const scale = Math.min(1, cfg.width / video.videoWidth);
+          canvas.width = Math.round(video.videoWidth * scale);
+          canvas.height = Math.round(video.videoHeight * scale);
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      busy = true;
-      canvas.toBlob(
-        async (blob) => {
-          try {
-            if (blob) {
-              socket.volatile.emit("frame", await blob.arrayBuffer());
-              setSent((n) => n + 1);
-            }
-          } finally {
-            busy = false;
-          }
-        },
-        "image/jpeg",
-        JPEG_QUALITY,
+          encoding = true;
+          canvas.toBlob(
+            async (blob) => {
+              try {
+                if (!blob || stopped) return;
+                const buf = await blob.arrayBuffer();
+                const sentAt = performance.now();
+                lastSendAt = sentAt;
+                inFlightRef.current++;
+                socket.emit("frame", buf, () => {
+                  inFlightRef.current = Math.max(0, inFlightRef.current - 1);
+                  window1s.rttSum += performance.now() - sentAt;
+                  window1s.acks++;
+                });
+                window1s.sent++;
+                window1s.bytes += buf.byteLength;
+              } finally {
+                encoding = false;
+              }
+            },
+            // Safari can't encode webp and silently returns png; the laptop copes either way.
+            `image/${cfg.format}`,
+            cfg.quality,
+          );
+        }
+      }
+
+      timer = window.setTimeout(
+        tick,
+        Math.max(0, 1000 / cfg.fps - (performance.now() - began)),
       );
-    }, intervalMs);
+    };
+    tick();
 
-    return () => window.clearInterval(timer);
-  }, [phase, intervalMs]);
+    const reporter = window.setInterval(() => {
+      const w = window1s;
+      const next = {
+        fps: w.sent,
+        dropped: w.dropped,
+        rtt: w.acks ? Math.round(w.rttSum / w.acks) : 0,
+        kb: w.sent ? Math.round(w.bytes / w.sent / 1024) : 0,
+      };
+      setLive(next);
+      socketRef.current?.volatile.emit("stats", {
+        sent: next.fps,
+        dropped: next.dropped,
+        rtt: next.rtt,
+        kb: next.kb,
+      });
+      w.sent = w.dropped = w.bytes = w.rttSum = w.acks = 0;
+    }, 1000);
+
+    return () => {
+      stopped = true;
+      window.clearTimeout(timer);
+      window.clearInterval(reporter);
+    };
+  }, [phase]);
 
   // The wake lock is released when the tab is hidden; take it back on return.
   useEffect(() => {
@@ -176,6 +297,11 @@ export default function Cam() {
     [],
   );
 
+  const togglePause = () => {
+    pausedRef.current = !pausedRef.current;
+    setPaused(pausedRef.current);
+  };
+
   const flip = async () => {
     const next = facing === "environment" ? "user" : "environment";
     try {
@@ -186,70 +312,98 @@ export default function Cam() {
     }
   };
 
+  const toggleTorch = async () => {
+    const track = streamRef.current?.getVideoTracks()[0];
+    const next = !torchOn;
+    try {
+      await track?.applyConstraints({
+        advanced: [{ torch: next } as MediaTrackConstraintSet],
+      });
+      setTorchOn(next);
+    } catch {
+      setTorchSupported(false);
+    }
+  };
+
   if (!sessionId) {
     return (
-      <div className="grid min-h-screen place-items-center bg-black px-6 text-center text-white">
+      <div className="grid h-dvh place-items-center bg-black px-6 text-center text-white">
         <p>Scan the QR code shown on your laptop to connect this phone.</p>
       </div>
     );
   }
 
-  return (
-    <div className="flex min-h-screen flex-col bg-black text-white">
-      <div className="relative flex-1 bg-black">
-        <video
-          ref={videoRef}
-          playsInline
-          muted
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        {phase !== "streaming" && (
-          <div className="absolute inset-0 grid place-items-center bg-black/80 px-6 text-center">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Noree camera</h1>
-              {(phase === "idle" || phase === "starting") && (
-                <>
-                  <p className="mt-3 text-white/70">
-                    This phone will send what its camera sees to your laptop.
-                  </p>
-                  <button
-                    onClick={start}
-                    disabled={phase === "starting"}
-                    className="mt-6 rounded-full bg-white px-8 py-3 font-medium text-black disabled:opacity-50"
-                  >
-                    {phase === "starting" ? "Starting…" : "Start camera"}
-                  </button>
-                </>
-              )}
-              {(phase === "error" || phase === "ended") && (
-                <p className="mt-3 text-white/70">{message}</p>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+  const streaming = phase === "streaming";
 
-      {phase === "streaming" && (
-        <footer className="flex items-center justify-between gap-3 border-t border-white/20 px-4 py-3 text-sm">
-          <span className="font-mono text-xs text-white/60">
-            {online ? `Sending · ${sent}` : "Reconnecting…"}
-          </span>
-          <select
-            value={intervalMs}
-            onChange={(e) => setIntervalMs(Number(e.target.value))}
-            className="rounded bg-white/10 px-2 py-1 text-xs"
-            aria-label="Frame rate"
-          >
-            {INTERVALS.map((ms) => (
-              <option key={ms} value={ms} className="text-black">
-                {(1000 / ms).toFixed(1)} fps
-              </option>
-            ))}
-          </select>
-          <button onClick={flip} className="rounded bg-white/10 px-3 py-1 text-xs">
-            Flip
-          </button>
-        </footer>
+  return (
+    <div className="fixed inset-0 h-dvh overflow-hidden bg-black text-white">
+      <video
+        ref={videoRef}
+        playsInline
+        muted
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+
+      {streaming && (
+        <>
+          <div className="absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-6 font-mono text-xs">
+            <span className="flex items-center gap-2">
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${
+                  !online ? "bg-red-500" : paused ? "bg-amber-400" : "bg-emerald-400"
+                }`}
+              />
+              {!online ? "Reconnecting…" : paused ? "Paused" : "Streaming"}
+            </span>
+            <span className="text-white/80">
+              {live.fps}/{config.fps} fps · {live.kb} KB · {live.rtt} ms
+              {live.dropped > 0 && ` · ${live.dropped} skipped`}
+            </span>
+          </div>
+
+          <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-5 bg-gradient-to-t from-black/60 to-transparent px-4 pt-8 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <IconButton label="Flip camera" onClick={flip}>
+              Flip
+            </IconButton>
+            <IconButton
+              label={paused ? "Resume streaming" : "Pause streaming"}
+              active={paused}
+              onClick={togglePause}
+            >
+              {paused ? "Resume" : "Pause"}
+            </IconButton>
+            {torchSupported && (
+              <IconButton label="Torch" active={torchOn} onClick={toggleTorch}>
+                Light
+              </IconButton>
+            )}
+          </div>
+        </>
+      )}
+
+      {!streaming && (
+        <div className="absolute inset-0 grid place-items-center bg-black/85 px-6 text-center">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Noree camera</h1>
+            {(phase === "idle" || phase === "starting") && (
+              <>
+                <p className="mt-3 text-white/70">
+                  This phone will send what its camera sees to your laptop.
+                </p>
+                <button
+                  onClick={start}
+                  disabled={phase === "starting"}
+                  className="mt-6 rounded-full bg-white px-8 py-3 font-medium text-black disabled:opacity-50"
+                >
+                  {phase === "starting" ? "Starting…" : "Start camera"}
+                </button>
+              </>
+            )}
+            {(phase === "error" || phase === "ended") && (
+              <p className="mt-3 text-white/70">{message}</p>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
