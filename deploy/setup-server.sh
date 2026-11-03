@@ -4,6 +4,8 @@
 # Serves the Vite build from /var/www/noree and proxies /api/ to the Nest app on :3000.
 set -euo pipefail
 
+DOMAIN="${DOMAIN:-kanya.alito.tech}"
+
 sudo apt-get update -y
 sudo apt-get install -y curl nginx unzip
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
@@ -22,10 +24,14 @@ sudo mkdir -p /var/www/noree
 sudo chown "$USER":"$USER" /var/www/noree
 
 sudo rm -f /etc/nginx/sites-enabled/default
-sudo tee /etc/nginx/conf.d/noree.conf >/dev/null <<'EOF'
+
+# Written once: certbot edits this file later, so never overwrite it on a re-run.
+NGINX_CONF=/etc/nginx/conf.d/noree.conf
+if [ ! -f "$NGINX_CONF" ]; then
+sudo tee "$NGINX_CONF" >/dev/null <<'EOF'
 server {
   listen 80 default_server;
-  server_name _;
+  server_name __DOMAIN__;
 
   root /var/www/noree;
   index index.html;
@@ -46,6 +52,11 @@ server {
   }
 }
 EOF
+sudo sed -i "s/__DOMAIN__/$DOMAIN/" "$NGINX_CONF"
+fi
+
+# certbot for enable-https.sh (installing it does not request a certificate)
+command -v certbot >/dev/null || sudo snap install --classic certbot
 
 sudo nginx -t
 sudo systemctl enable --now nginx
