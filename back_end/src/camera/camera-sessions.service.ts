@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { DEFAULT_CONFIG, type CameraConfig } from './camera-config.js';
 
 const MAX_SESSIONS = 200;
 const PAIRING_TTL_MS = 10 * 60 * 1000;
@@ -12,11 +13,12 @@ export interface CameraSession {
   /** Lets the phone reconnect after a network drop without a new QR scan. */
   resumeKey: string | null;
   phoneSocketId: string | null;
+  config: CameraConfig;
   createdAt: number;
 }
 
 export type JoinResult =
-  | { ok: true; resumeKey: string }
+  | { ok: true; resumeKey: string; config: CameraConfig }
   | { ok: false; error: 'not_found' | 'invalid_token' | 'already_paired' };
 
 function secret(bytes: number): string {
@@ -33,7 +35,7 @@ function sameSecret(a: string, b: string): boolean {
 export class CameraSessionsService {
   private readonly sessions = new Map<string, CameraSession>();
 
-  create(laptopSocketId: string): CameraSession | null {
+  create(laptopSocketId: string, config: CameraConfig = DEFAULT_CONFIG): CameraSession | null {
     this.expireStale();
     if (this.sessions.size >= MAX_SESSIONS) return null;
     const session: CameraSession = {
@@ -42,6 +44,7 @@ export class CameraSessionsService {
       pairingToken: secret(24),
       resumeKey: null,
       phoneSocketId: null,
+      config,
       createdAt: Date.now(),
     };
     this.sessions.set(session.id, session);
@@ -75,7 +78,13 @@ export class CameraSessionsService {
     }
 
     session.phoneSocketId = phoneSocketId;
-    return { ok: true, resumeKey: session.resumeKey! };
+    return { ok: true, resumeKey: session.resumeKey!, config: session.config };
+  }
+
+  findByLaptop(socketId: string): CameraSession | undefined {
+    for (const session of this.sessions.values()) {
+      if (session.laptopSocketId === socketId) return session;
+    }
   }
 
   findByPhone(socketId: string): CameraSession | undefined {
