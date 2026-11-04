@@ -12,3 +12,7 @@ services/agent-sandbox/registry
 services/agent-sandbox/artifacts
 services/agent-sandbox/.venv
 __pycache__/
+
+.env
+
+modal.txt

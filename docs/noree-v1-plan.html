@@ -129,8 +129,8 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
   <div class="facts">
     <div class="fact"><b>Thu Nov 5, 7:30 AM IST</b><span>Submission and credit claim deadline</span></div>
     <div class="fact"><b id="countdown">15 hours</b><span>Time left, as of when you opened this</span></div>
-    <div class="fact"><b>M4 next</b><span>M0 to M2 verified, M3 verified locally</span></div>
-    <div class="fact"><b>Rev 4</b><span>Wed Nov 4, 2026, 18:35 IST</span></div>
+    <div class="fact"><b>3D service next</b><span>M0 to M3 verified, M4 after this</span></div>
+    <div class="fact"><b>Rev 5</b><span>Wed Nov 4, 2026, 19:15 IST</span></div>
   </div>
 </header>
 
@@ -144,8 +144,8 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
     <tr><th>Milestone</th><th>Window (IST)</th><th>Result</th><th>State</th></tr>
     <tr><td>M0 Foundation</td><td>17:00 to 18:00</td><td>Code ported, Slate agent answers through Nest, CI green</td><td><span class="pill doing">CI after push</span></td></tr>
     <tr><td>M1 Board</td><td>18:00 to 19:15</td><td>Projects, blocks and frames that survive a refresh</td><td><span class="pill done">done</span></td></tr>
-    <tr><td>M2 Multiplayer</td><td>19:15 to 20:30</td><td>Two browsers in sync <strong>on the live server</strong></td><td><span class="pill done">done, 2 checks open</span></td></tr>
-    <tr><td>M3 Slate</td><td>20:30 to 22:30</td><td>Handwriting and AI inside a block, with pages</td><td><span class="pill doing">live test next</span></td></tr>
+    <tr><td>M2 Multiplayer</td><td>19:15 to 20:30</td><td>Two browsers in sync <strong>on the live server</strong></td><td><span class="pill done">done</span></td></tr>
+    <tr><td>M3 Slate</td><td>20:30 to 22:30</td><td>Handwriting and AI inside a block, with pages</td><td><span class="pill done">done</span></td></tr>
     <tr><td>M4 Connections, chat</td><td>22:30 to 23:45</td><td>A line gives a block's chat real context</td><td><span class="pill todo">todo</span></td></tr>
     <tr><td>M5 3D block</td><td>23:45 to 01:00</td><td>Slate connected to 3D, Generate works live</td><td><span class="pill todo">todo</span></td></tr>
     <tr><td>M6 Read, export</td><td>01:00 to 01:30</td><td>Read view and Markdown export</td><td><span class="pill todo">todo</span></td></tr>
@@ -633,9 +633,9 @@ generate-3d -> brief step, then agent-sandbox</code></pre>
     <tr><td>G2</td><td><strong>Sharing code between apps can break production.</strong> pm2 runs <code>dist/main.js</code> and <code>rootDir</code> is <code>./src</code>. Importing from outside <code>src</code> would move or fail that output.</td><td><code>shared/</code> is copied into each app by npm <code>pre*</code> hooks. <code>deploy.yml</code> doesn't need a change for this</td><td>M0</td></tr>
     <tr><td>G3</td><td><strong>Uploads over 1 MB would fail.</strong> The nginx config sets no <code>client_max_body_size</code>, and Nest's JSON limit is 100 KB by default.</td><td><code>remote-deploy.sh</code> adds <code>conf.d/noree-upload.conf</code> with 12 MB, which doesn't touch the certbot-managed file. Images go through multipart upload, not JSON</td><td>M0</td></tr>
     <tr><td>G4</td><td><strong>Two WebSocket servers share one HTTP server.</strong> Socket.IO is already attached.</td><td>Build Hocuspocus <code>new Server()</code> without calling <code>listen</code>, and forward only <code>/collab</code> upgrades to its <code>httpServer</code>. The camera pages get re-tested at M2</td><td>M2</td></tr>
-    <tr><td>G5</td><td><strong>Deploys could report failure while still running.</strong> <code>aws ssm wait command-executed</code> gives up after about 100 seconds, and installing Python packages can take longer.</td><td>Replace the waiter in <code>deploy.yml</code> with a polling loop of up to 10 minutes</td><td>M5</td></tr>
+    <tr><td>G5</td><td><strong>Deploys could report failure while still running.</strong> <code>aws ssm wait command-executed</code> gives up after about 100 seconds, and installing Python packages can take longer.</td><td>Replace the waiter in <code>deploy.yml</code> with a polling loop of up to 10 minutes</td><td>Done before M4</td></tr>
     <tr><td>G6</td><td><strong>Each deploy restarts the server.</strong> Connections drop and running jobs die.</td><td>Clients reconnect on their own. Add shutdown flush (<code>flushPendingStores</code>), pm2 <code>kill_timeout</code>, and mark stale jobs failed when a document loads. <strong>No deploys during recording</strong></td><td>M2</td></tr>
-    <tr><td>G7</td><td><strong>Server memory is unknown.</strong> The instance ID in <code>aws-bootstrap.sh</code> wasn't found by the AWS access available here, so I couldn't check its type. That access may be a different account.</td><td>Run <code>free -m</code> through SSM. On very low memory, add swap or use the C2 fallback</td><td>M0</td></tr>
+    <tr><td>G7</td><td><strong>Server memory: resolved.</strong> <code>free -m</code> shows 15.7 GB total and 14.5 GB available, which is plenty for the 3D service.</td><td>None needed</td><td>Closed</td></tr>
   </table></div>
   <h3>Files that change</h3>
   <div class="tbl"><table>
@@ -698,7 +698,7 @@ node scripts/sync-shared.mjs --watch # while editing shared/
       <li><input type="checkbox" disabled checked> <code>shared/</code>, <code>sync-shared.mjs</code>, npm hooks, ignore rules (G2)</li>
       <li><input type="checkbox" disabled checked> Add dependencies to both apps</li>
       <li><input type="checkbox" disabled checked> Env loading and <code>.env.example</code> (G1), upload limit (G3)</li>
-      <li><input type="checkbox" disabled> Check server memory (G7). Needs server access, moved to M2</li>
+      <li><input type="checkbox" disabled checked> Check server memory (G7): 15.7 GB, plenty</li>
       <li><input type="checkbox" disabled checked> Port the Slate agent to Nest, with a temporary endpoint that proves a real run</li>
       <li><input type="checkbox" disabled checked> <code>schema.ts</code> and <code>actions.ts</code>, with tests</li>
       <li><input type="checkbox" disabled checked> <code>#/app</code> and <code>#/p/&lt;id&gt;</code> routes with an empty shell</li>
@@ -731,7 +731,7 @@ node scripts/sync-shared.mjs --watch # while editing shared/
       <li><input type="checkbox" disabled checked> <strong>Merge to <code>main</code> and test on the live site</strong>, including the camera pages</li>
     </ul>
     <p class="dw"><strong>Done when:</strong> two browsers stay in sync on <code>kanya.alito.tech</code>, a redeploy loses nothing, and a server script can add a block that appears live.</p>
-    <p class="dw"><strong>Verified locally Nov 4, 17:40:</strong> two browsers through the dev proxy (three runs in a row), plus 29 backend tests covering server restart, offline merge, rejected names, agent writes, and camera sockets beside <code>/collab</code>. <strong>Verified live Nov 4, 18:20:</strong> two browsers synced on <code>kanya.alito.tech</code> through nginx and HTTPS, and a fresh browser loaded from the server. The camera page still shows its QR code, with no phone paired. <strong>Still open:</strong> confirming a redeploy loses nothing, at the next deploy, and the server memory check (G7), moved here from M0.</p>
+    <p class="dw"><strong>Verified locally Nov 4, 17:40:</strong> two browsers through the dev proxy (three runs in a row), plus 29 backend tests covering server restart, offline merge, rejected names, agent writes, and camera sockets beside <code>/collab</code>. <strong>Verified live Nov 4, 18:20:</strong> two browsers synced on <code>kanya.alito.tech</code> through nginx and HTTPS, and a fresh browser loaded from the server. The camera page still shows its QR code, with no phone paired. A redeploy kept the test project on record. Server memory (G7) is resolved.</p>
     <p class="gate"><strong>Gate at 20:30:</strong> if sync isn't reliable, keep the local Y.Doc, carry on, and come back after M5. The rest of the code doesn't depend on the network.</p>
   </div>
 
@@ -747,7 +747,7 @@ node scripts/sync-shared.mjs --watch # while editing shared/
       <li><input type="checkbox" disabled checked> Snapshots saved as assets, trace in the panel</li>
     </ul>
     <p class="dw"><strong>Done when:</strong> writing <code>z = a + ib</code> gives the outline, arrow and Argand plane as it does today, and a second browser sees it all with sliders in sync.</p>
-    <p class="dw"><strong>Verified locally Nov 4, 18:30:</strong> drawn with the mouse in Edge, one real Muse Spark Open run in 61 s, and a second browser saw the ink, AI result and slider changes live. <strong>Still open:</strong> the same on the live site, which needs the API keys on the server.</p>
+    <p class="dw"><strong>Verified locally Nov 4, 18:30:</strong> drawn with the mouse in Edge, one real Muse Spark Open run in 61 s, and a second browser saw the ink, AI result and slider changes live. <strong>Verified live Nov 4:</strong> you tested AI and collaboration on the live site, and both work.</p>
     <p class="gate"><strong>Gate at 22:30:</strong> Slate is the core of the demo, so it may take time from M6. It may not take time from M5.</p>
   </div>
 

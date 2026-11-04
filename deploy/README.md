@@ -16,6 +16,8 @@ push to main -> GitHub Actions (lint, test, build)
 | `setup-server.sh` | the instance, once | Node 22, pm2, nginx, AWS CLI, certbot. Never overwrites an existing nginx config. |
 | `enable-https.sh` | the instance, once | Let's Encrypt certificate and http -> https redirect. |
 | `remote-deploy.sh` | the instance, every deploy | Pulls the release from S3, updates both apps, health-checks `/api/`. |
+| `setup-sandbox.sh` | the instance, every deploy | Installs the 3D service into `~/noree-sandbox`, keeping its `.env`, venv and registry. A failure only warns. |
+| `run-sandbox.sh` | the instance, by pm2 | Loads keys and starts the 3D service on `127.0.0.1:8000`. |
 | `../.github/workflows/deploy.yml` | GitHub | CI on every push/PR, deploy on `main`. |
 
 ## Setting up a new server, in order
@@ -38,6 +40,7 @@ push to main -> GitHub Actions (lint, test, build)
 ## Notes
 - `/api/foo` reaches Nest as `/foo` (nginx strips the prefix). Call the API with relative URLs, so no CORS is needed.
 - Backend secrets go in `~/noree-api/.env` on the server. Deploys never overwrite it.
+- The 3D service also reads `~/noree-api/.env`. Its own `~/noree-sandbox/.env` only needs `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET`. After changing it, run `pm2 restart noree-sandbox --update-env`.
 - Deploys replace the frontend files and the backend `dist/`, then reload pm2. They never touch nginx or the certificate.
 - Re-running `setup-server.sh` is safe: the nginx config is only written if it doesn't exist.
 - A browser opening `https://` before step 6 fails with "site can't be reached". Plain `http://` works.
