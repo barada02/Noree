@@ -129,8 +129,8 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
   <div class="facts">
     <div class="fact"><b>Thu Nov 5, 7:30 AM IST</b><span>Submission and credit claim deadline</span></div>
     <div class="fact"><b id="countdown">15 hours</b><span>Time left, as of when you opened this</span></div>
-    <div class="fact"><b>3D service next</b><span>M0 to M3 verified, M4 after this</span></div>
-    <div class="fact"><b>Rev 5</b><span>Wed Nov 4, 2026, 19:15 IST</span></div>
+    <div class="fact"><b>M5 next</b><span>M0 to M3 verified, M4 verified locally, 3D service running</span></div>
+    <div class="fact"><b>Rev 6</b><span>Wed Nov 4, 2026, 19:40 IST</span></div>
   </div>
 </header>
 
@@ -146,7 +146,7 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
     <tr><td>M1 Board</td><td>18:00 to 19:15</td><td>Projects, blocks and frames that survive a refresh</td><td><span class="pill done">done</span></td></tr>
     <tr><td>M2 Multiplayer</td><td>19:15 to 20:30</td><td>Two browsers in sync <strong>on the live server</strong></td><td><span class="pill done">done</span></td></tr>
     <tr><td>M3 Slate</td><td>20:30 to 22:30</td><td>Handwriting and AI inside a block, with pages</td><td><span class="pill done">done</span></td></tr>
-    <tr><td>M4 Connections, chat</td><td>22:30 to 23:45</td><td>A line gives a block's chat real context</td><td><span class="pill todo">todo</span></td></tr>
+    <tr><td>M4 Connections, chat</td><td>22:30 to 23:45</td><td>A line gives a block's chat real context</td><td><span class="pill doing">live test next</span></td></tr>
     <tr><td>M5 3D block</td><td>23:45 to 01:00</td><td>Slate connected to 3D, Generate works live</td><td><span class="pill todo">todo</span></td></tr>
     <tr><td>M6 Read, export</td><td>01:00 to 01:30</td><td>Read view and Markdown export</td><td><span class="pill todo">todo</span></td></tr>
     <tr><td>M7 Polish</td><td>01:30 to 03:00</td><td>Demo script runs twice on production</td><td><span class="pill todo">todo</span></td></tr>
@@ -218,6 +218,7 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
     <tr><td>Undo AI</td><td>Grouped undo per job</td><td>Remove all objects with that <code>runId</code></td><td>Objects already carry <code>runId</code>. Simpler, and any person can do it.</td></tr>
     <tr><td>Text block</td><td>Not specified</td><td>Plain text on <code>Y.Text</code></td><td>Small and reliable. A BlockNote doc block comes after V1.</td></tr>
     <tr><td>Pasted items and the agent</td><td>Not specified</td><td>Each paste counts as ink through an outline stroke, and the snapshot shows what it really is</td><td>The agent can point at a paste and never places anything on top of it, with no change to the agent.</td></tr>
+    <tr><td>Who writes the user's chat message</td><td>Client action</td><td>The server, when the job starts</td><td>A refused or rate-limited question leaves no orphan message in the thread.</td></tr>
     <tr><td>Frame growth</td><td>Grows as a block moves</td><td>Grows when a block is dropped</td><td>Growing during a drag would make it impossible to drag a block out.</td></tr>
     <tr><td>Project rename</td><td><code>PATCH /projects/:id</code></td><td>Written to the document, and the server copies it to <code>projects.json</code> on save</td><td>Syncs to everyone like any other edit, with no extra endpoint.</td></tr>
   </table></div>
@@ -754,12 +755,13 @@ node scripts/sync-shared.mjs --watch # while editing shared/
   <div class="milestone">
     <h3>M4 Connections and chat <span class="when">22:30 to 23:45</span></h3>
     <ul>
-      <li><input type="checkbox" disabled> Handles and connection rules</li>
-      <li><input type="checkbox" disabled> <code>collectContext</code> with limits, Slate transcript with caching</li>
-      <li><input type="checkbox" disabled> AI panel following the selected block, one thread per block, source list</li>
-      <li><input type="checkbox" disabled> Chat endpoint using block and connected context</li>
+      <li><input type="checkbox" disabled checked> Handles and connection rules</li>
+      <li><input type="checkbox" disabled checked> <code>collectContext</code> with limits, Slate transcript with caching</li>
+      <li><input type="checkbox" disabled checked> AI panel following the selected block, one thread per block, source list</li>
+      <li><input type="checkbox" disabled checked> Chat endpoint using block and connected context</li>
     </ul>
     <p class="dw"><strong>Done when:</strong> a question on a Text block connected to a Slate gets an answer that correctly uses what was handwritten.</p>
+    <p class="dw"><strong>Verified locally Nov 4, 19:35:</strong> a real model read a handwritten <code>x = 7</code> through a connection and answered 7 in 16 s, and a second browser saw the conversation. <strong>Still open:</strong> the same on the live site, after the next deploy.</p>
   </div>
 
   <div class="milestone">
@@ -770,7 +772,7 @@ node scripts/sync-shared.mjs --watch # while editing shared/
       <li><input type="checkbox" disabled> Live progress in the block and panel</li>
       <li><input type="checkbox" disabled> Versions with Approved or Draft badge, preview on the board, live view in focus mode</li>
       <li><input type="checkbox" disabled> Out-of-date badge and Regenerate</li>
-      <li><input type="checkbox" disabled> Sandbox on the server (G5): package, pm2 app, Modal tokens</li>
+      <li><input type="checkbox" disabled checked> Sandbox on the server (G5): package, pm2 app, Modal tokens. Runs on arm64, and its Modal probe passes</li>
     </ul>
     <p class="dw"><strong>Done when:</strong> connecting a Slate to a 3D block and pressing Generate makes a model reflecting the Slate, while a second browser watches the same progress.</p>
     <p class="gate"><strong>Demo safety:</strong> because Modal can be slow or fail, add a clearly labeled option to load an existing registry entry. If it's used in the video, say so.</p>
@@ -838,7 +840,7 @@ node scripts/sync-shared.mjs --watch # while editing shared/
     <tr><td>Time runs out</td><td><span class="pill bad">high</span></td><td><span class="pill bad">high</span></td><td>Fixed gates, cut list, 03:00 freeze</td></tr>
     <tr><td>Hocuspocus doesn't share Nest's HTTP server cleanly</td><td><span class="pill warn">medium</span></td><td><span class="pill warn">medium</span></td><td>Tested early at M2. Fall back to <code>y-websocket</code> after 30 minutes</td></tr>
     <tr><td>Yjs and React Flow fight during drag</td><td><span class="pill warn">medium</span></td><td><span class="pill bad">high</span></td><td>One binding module, throttled writes, tested at M1</td></tr>
-    <tr><td><code>agent-sandbox</code> won't run on the arm64 server</td><td><span class="pill warn">medium</span></td><td><span class="pill warn">medium</span></td><td>Not tested yet. Fall back to laptop plus tunnel for the demo</td></tr>
+    <tr><td><code>agent-sandbox</code> won't run on the arm64 server</td><td><span class="pill ok">resolved</span></td><td><span class="pill ok">none</span></td><td>Running under pm2 on the server, and its Modal probe passes. A full 3D generation hasn't been run there yet</td></tr>
     <tr><td>Modal or sandbox fails on camera</td><td><span class="pill warn">medium</span></td><td><span class="pill bad">high</span></td><td>Labeled fallback to an existing entry</td></tr>
     <tr><td>Stroke data makes the document slow</td><td><span class="pill warn">medium</span></td><td><span class="pill warn">medium</span></td><td>Simplify strokes. Subdocuments later</td></tr>
     <tr><td>Too many WebGL contexts</td><td><span class="pill warn">medium</span></td><td><span class="pill warn">medium</span></td><td>Preview images on the board, one live view</td></tr>
