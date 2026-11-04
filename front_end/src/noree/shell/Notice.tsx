@@ -1,4 +1,4 @@
-import heroImage from "../../assets/brand/hero.webp";
+import heroImage from "../../assets/brand/hero.png";
 import { NewProjectButton } from "./NewProjectButton";
 import { ProjectSidebar } from "./ProjectSidebar";
 

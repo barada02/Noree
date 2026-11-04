@@ -158,7 +158,7 @@
   border-radius: 999px;
   font: 650 11.5px/1 var(--font-ui);
   background: var(--n-leaf-soft);
-  color: var(--n-moss);
+  color: var(--n-moss-hover);
 }
 .n-chip--warn {
   background: color-mix(in srgb, var(--n-butter) 55%, transparent);

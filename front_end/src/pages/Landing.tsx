@@ -1,7 +1,7 @@
 import "../brand-fonts";
 import "../noree/noree.css";
 import { BRAND } from "../brand";
-import heroImage from "../assets/brand/hero.webp";
+import heroImage from "../assets/brand/hero.png";
 import shadowsImage from "../assets/brand/shadows.webp";
 import shotAi from "../assets/brand/shot-ai.webp";
 import shotBoard from "../assets/brand/shot-board.webp";

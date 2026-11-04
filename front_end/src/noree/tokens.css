@@ -1,22 +1,22 @@
-/* The product's design tokens: a warm paper base, deep moss ink and one leaf-green accent.
+/* The product's design tokens: a clean white base, near-black green ink and one emerald accent.
    Imported by index.css so Tailwind can turn them into utilities such as bg-n-surface and text-n-ink.
    The experiment pages keep their own look. */
 :root {
-  --n-bg: #f4f1e6;
-  --n-rail: #ece8da;
-  --n-surface: #fdfcf7;
-  --n-sunken: #e8e4d5;
-  --n-line: #d9d3bf;
-  --n-line-soft: #e5e0cf;
-  --n-ink: #1e2b24;
-  --n-ink-2: #4f5e55;
+  --n-bg: #f6f8f6;
+  --n-rail: #eef2ee;
+  --n-surface: #ffffff;
+  --n-sunken: #e9eee9;
+  --n-line: #d7e0d7;
+  --n-line-soft: #e2eae2;
+  --n-ink: #17211b;
+  --n-ink-2: #435449;
   --n-ink-3: #526657;
-  --n-moss: #26503c;
-  --n-moss-hover: #1d4230;
-  --n-on-moss: #f5f3e8;
-  --n-leaf: #3f8a5c;
-  --n-leaf-soft: #dfecdc;
-  --n-leaf-ring: rgb(63 138 92 / 0.32);
+  --n-moss: #078847;
+  --n-moss-hover: #06703a;
+  --n-on-moss: #ffffff;
+  --n-leaf: #0da35a;
+  --n-leaf-soft: #e0f4e7;
+  --n-leaf-ring: rgb(13 163 90 / 0.32);
   --n-butter: #f0db8a;
   --n-butter-ink: #4a3f12;
   --n-sky: #d3e3e9;

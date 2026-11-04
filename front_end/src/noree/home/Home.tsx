@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import heroImage from "../../assets/brand/hero.webp";
+import heroImage from "../../assets/brand/hero.png";
 import { localActor, renameLocalActor } from "../doc/actor";
 import { startAgent } from "../lib/api";
 import { greeting, relativeTime, tintFor } from "../lib/covers";

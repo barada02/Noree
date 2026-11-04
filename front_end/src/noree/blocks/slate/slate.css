@@ -8,7 +8,7 @@
 
 .slate-scope {
   --panel: #ffffff; --line: #e2dfd8; --text: #17181a; --muted: #6d6f73;
-  --accent: #3f8a5c; --accent-soft: #e8f2e4; --ink: #111815; --dot: #d6d6c4; --ok: #1f9d55; --bad: #c62828;
+  --accent: #0da35a; --accent-soft: #e0f4e7; --ink: #111815; --dot: #d6d6c4; --ok: #1f9d55; --bad: #c62828;
   color: var(--text);
   font-size: 14px;
   line-height: 1.45;
