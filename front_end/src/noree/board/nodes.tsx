@@ -46,10 +46,11 @@ function EditableTitle({ id, title, className }: { id: string; title: string; cl
 const HANDLE = "!h-2.5 !w-2.5 !border-2 !border-white !bg-stone-500 dark:!border-stone-900";
 
 export function BlockNode({ id, data, selected }: Props) {
-  const { doc, peerSelections } = useBoardContext();
+  const { doc, peerSelections, sourceCounts } = useBoardContext();
   const { Preview, label } = BLOCK_BY_TYPE[data.blockType];
   const sticky = data.blockType === "sticky";
   const peerColor = peerSelections[id];
+  const sources = sourceCounts[id] ?? 0;
   return (
     <>
       <NodeResizer isVisible={selected} minWidth={140} minHeight={90} color="#78716c" />
@@ -63,7 +64,10 @@ export function BlockNode({ id, data, selected }: Props) {
       >
         <header className="flex shrink-0 items-center gap-2 border-b border-black/10 px-3 py-1.5 dark:border-white/10">
           <EditableTitle id={id} title={data.title} className="text-xs font-medium" />
-          <span className="ml-auto font-mono text-[10px] tracking-wider uppercase opacity-50">{label}</span>
+          <span className="ml-auto flex shrink-0 items-center gap-2 font-mono text-[10px] tracking-wider uppercase opacity-50">
+            {sources > 0 && <span data-source-count={sources}>{sources === 1 ? "1 source" : `${sources} sources`}</span>}
+            <span>{label}</span>
+          </span>
         </header>
         <div className="min-h-0 flex-1">
           <Preview doc={doc} id={id} />

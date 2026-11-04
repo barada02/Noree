@@ -35,8 +35,12 @@ export function basetenProvider(): Provider {
         {
           model,
           messages,
-          tools: tools.map((t) => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.parameters } })),
-          tool_choice: 'auto',
+          ...(tools.length
+            ? {
+                tools: tools.map((t) => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.parameters } })),
+                tool_choice: 'auto',
+              }
+            : {}),
           temperature: 0.3,
           max_tokens: 4096,
         },

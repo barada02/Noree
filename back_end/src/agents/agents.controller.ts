@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { AssetsService } from '../assets/assets.service.js';
 import { ProjectsStore } from '../collab/projects.store.js';
 import { JobsService } from '../jobs/jobs.service.js';
+import { runChatJob } from './chat.js';
 import { runSlateJob } from './slate-run.js';
 import { health, providerChain } from './slate/providers/index.js';
 
@@ -11,6 +12,11 @@ const SlateRunBody = z.object({
   snapshotUrl: z.string().max(200),
   instruction: z.string().trim().max(2000).optional(),
   provider: z.enum(['baseten', 'meta']).default('baseten'),
+  person: z.object({ id: z.string().min(1).max(64), name: z.string().min(1).max(40) }),
+});
+
+const ChatBody = z.object({
+  text: z.string().trim().min(1).max(4000),
   person: z.object({ id: z.string().min(1).max(64), name: z.string().min(1).max(40) }),
 });
 
@@ -41,6 +47,20 @@ export class AgentsController {
     return this.jobs.start(
       { projectId: id, blockId, kind: 'slate-run', startedBy: { kind: 'person', ...person }, fields: { pageId } },
       (context) => runSlateJob(context, { blockId, pageId, snapshot, instruction: instruction || undefined, provider }, providerChain(provider)),
+    );
+  }
+
+  /** Asks about a block, using the block and what's connected to it. The answer arrives through the document. */
+  @Post('projects/:id/blocks/:blockId/chat')
+  @HttpCode(202)
+  chat(@Param('id') id: string, @Param('blockId') blockId: string, @Body() body: unknown) {
+    if (!this.store.get(id)) throw new NotFoundException();
+    const parsed = ChatBody.safeParse(body);
+    if (!parsed.success) throw new BadRequestException('Invalid question.');
+    const { text, person } = parsed.data;
+    const actor = { kind: 'person' as const, ...person };
+    return this.jobs.start({ projectId: id, blockId, kind: 'chat', startedBy: actor }, (context) =>
+      runChatJob(context, { blockId, question: text, person: actor, readAsset: (url) => this.assets.readAsDataUrl(id, url) }, providerChain('meta')),
     );
   }
 

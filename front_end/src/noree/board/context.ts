@@ -8,6 +8,8 @@ export type BoardContextValue = {
   hoverFrameId: string | null;
   /** Blocks selected by other people, with that person's color. */
   peerSelections: Record<string, string>;
+  /** How many blocks each block reads from. */
+  sourceCounts: Record<string, number>;
 };
 
 export const BoardContext = createContext<BoardContextValue | null>(null);
