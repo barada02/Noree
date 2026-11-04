@@ -20,7 +20,7 @@ export function NewProjectButton({ label, className = "n-btn n-btn--primary", sh
 
   return (
     <>
-      <button type="button" disabled={busy} onClick={() => void create()} className={className}>
+      <button type="button" disabled={busy} onClick={() => void create()} className={className} aria-label={label || "New project"} title={label ? undefined : "New project"}>
         {showPlus && <PlusIcon />}
         {label}
       </button>

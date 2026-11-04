@@ -8,7 +8,8 @@ import type { usePresence } from "../doc/usePresence";
 import type { useUndo } from "../doc/useUndo";
 import { useYValue } from "../doc/useY";
 import { rememberProject } from "../lib/projects";
-import { DownloadIcon, RedoIcon, ShareIcon, SparkIcon, UndoIcon } from "../ui/icons";
+import { DownloadIcon, MoonIcon, RedoIcon, ShareIcon, SparkIcon, SunIcon, UndoIcon } from "../ui/icons";
+import { useTheme } from "../../useTheme";
 import { Mark } from "../ui/Mark";
 import { initialOf, ProfileMenu } from "../ui/ProfileMenu";
 
@@ -76,6 +77,15 @@ function HelpButton() {
         </div>
       )}
     </>
+  );
+}
+
+function ThemeButton() {
+  const { theme, toggle } = useTheme();
+  return (
+    <button type="button" onClick={toggle} aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} title={theme === "dark" ? "Light mode" : "Dark mode"} className="n-btn n-btn--ghost n-btn--icon n-btn--sm shrink-0 text-n-ink-2">
+      {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+    </button>
   );
 }
 
@@ -186,6 +196,7 @@ export function TopBar({ doc, mode, onModeChange, panelOpen, onTogglePanel, proj
             </span>
           )}
         <HelpButton />
+        <ThemeButton />
         <ProfileMenu name={presence.name} color={presence.color} onRename={presence.rename} />
         <ShareButton />
       </span>
