@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { useTheme } from "../../useTheme";
 
 export const initialOf = (name: string) => name.trim().slice(0, 1).toUpperCase() || "?";
 
@@ -6,6 +7,7 @@ type Props = { name: string; color: string; onRename: (name: string) => void };
 
 /** There are no accounts yet, so a profile is just a name and a color kept in this browser. */
 export function ProfileMenu({ name, color, onRename }: Props) {
+  const { theme, toggle } = useTheme();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const inputId = useId();
@@ -56,6 +58,17 @@ export function ProfileMenu({ name, color, onRename }: Props) {
             }}
           />
           <p className="mt-2.5 text-xs leading-5 text-n-ink-3">Shown to others on a board. It's saved in this browser, because there are no accounts yet.</p>
+          <div className="mt-4 flex items-center justify-between gap-3 border-t border-n-line-soft pt-3">
+            <span className="n-eyebrow">Appearance</span>
+            <span role="group" aria-label="Appearance" className="n-seg">
+              <button type="button" aria-pressed={theme === "light"} onClick={() => theme !== "light" && toggle()}>
+                Light
+              </button>
+              <button type="button" aria-pressed={theme === "dark"} onClick={() => theme !== "dark" && toggle()}>
+                Dark
+              </button>
+            </span>
+          </div>
         </div>
       )}
     </div>

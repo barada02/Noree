@@ -114,11 +114,13 @@
   font-size: 15px;
 }
 .n-btn--icon {
-  width: 2.1rem;
+  width: 2.5rem;
+  height: 2.5rem;
   padding: 0;
 }
 .n-btn--sm.n-btn--icon {
-  width: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
 }
 .n-btn[aria-pressed="true"].n-btn--outline {
   background: var(--n-leaf-soft);
@@ -452,6 +454,25 @@
 }
 .noree-app .react-flow__resize-control.line {
   border-color: var(--n-moss);
+}
+.noree-app .react-flow__handle::after {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  border-radius: 999px;
+}
+@media (max-width: 767px) {
+  .noree-app .react-flow__minimap {
+    display: none;
+  }
+  .noree-app .react-flow__controls {
+    bottom: 6.5rem;
+  }
+  .n-dock {
+    bottom: 0.75rem;
+    max-width: calc(100vw - 1rem);
+    overflow-x: auto;
+  }
 }
 .noree-app .react-flow__edge-path {
   stroke-linecap: round;

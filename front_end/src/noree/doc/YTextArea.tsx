@@ -70,6 +70,7 @@ export function YTextArea({ text, placeholder, className }: Props) {
       ref={ref}
       value={value}
       placeholder={placeholder}
+      aria-label={placeholder ?? "Text block"}
       onChange={(e) => onLocalChange(e.target.value)}
       className={`nodrag nowheel nopan h-full w-full resize-none bg-transparent outline-none ${className ?? ""}`}
     />

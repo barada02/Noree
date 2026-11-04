@@ -135,8 +135,8 @@ export function BoardCanvas({ doc, projectId, actor, board, presence, onDragStar
 
   const personName = presence.name;
   const context = useMemo(
-    () => ({ doc, projectId, actor, personName, act, hoverFrameId, peerSelections, sourceCounts }),
-    [doc, projectId, actor, personName, act, hoverFrameId, peerSelections, sourceCounts],
+    () => ({ doc, projectId, actor, personName, act, hoverFrameId, peerSelections, sourceCounts, onOpenBlock }),
+    [doc, projectId, actor, personName, act, hoverFrameId, peerSelections, sourceCounts, onOpenBlock],
   );
 
   return (

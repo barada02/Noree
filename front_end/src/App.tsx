@@ -7,6 +7,7 @@ import Home from "./pages/Home";
 import Landing from "./pages/Landing";
 import Yjs from "./pages/Yjs";
 import { ThemeProvider } from "./theme";
+import { Mark } from "./noree/ui/Mark";
 
 const BlockNoteExperiment = lazy(
   () => import("./experiments/blocknote/BlockNoteExperiment"),
@@ -39,7 +40,7 @@ function App() {
   if (route === "app" || route.startsWith("p/")) {
     return (
       <ThemeProvider>
-        <Suspense fallback={null}>
+        <Suspense fallback={<div className="flex h-screen flex-col items-center justify-center gap-4" role="status" aria-label="Loading"><span className="animate-pulse"><Mark tile size={44} /></span><p className="text-sm text-stone-500">Loading…</p></div>}>
           <NoreeApp projectId={route === "app" ? null : route.slice(2)} />
         </Suspense>
       </ThemeProvider>

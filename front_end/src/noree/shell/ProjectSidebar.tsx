@@ -41,7 +41,7 @@ export function ProjectSidebar({ activeId, children }: Props) {
                   aria-label={`Remove ${p.title} from this list`}
                   title="Remove from this list. The project and its link keep working."
                   onClick={() => forgetProject(p.id)}
-                  className="n-btn n-btn--ghost n-btn--sm n-btn--icon text-n-ink-3 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                  className="n-btn n-btn--ghost n-btn--sm n-btn--icon text-n-ink-3 opacity-70 group-hover:opacity-100 focus:opacity-100 lg:opacity-0"
                 >
                   <CloseIcon />
                 </button>

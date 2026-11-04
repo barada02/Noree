@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import heroImage from "../../assets/brand/hero.webp";
 import { localActor, renameLocalActor } from "../doc/actor";
 import { startAgent } from "../lib/api";
-import { coverFor, greeting, relativeTime } from "../lib/covers";
+import { greeting, relativeTime, tintFor } from "../lib/covers";
 import { createProject, forgetProject, onProjectsChanged, projectHref, recentProjects } from "../lib/projects";
 import { ProjectSidebar } from "../shell/ProjectSidebar";
 import { ArrowRightIcon, CloseIcon, PlusIcon, SparkIcon } from "../ui/icons";
@@ -26,6 +26,12 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [openAnyway, setOpenAnyway] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<"recent" | "title">("recent");
+  const ideaRef = useRef<HTMLTextAreaElement>(null);
+  const visibleProjects = projects
+    .filter((p) => p.title.toLowerCase().includes(query.trim().toLowerCase()))
+    .sort((a, b) => (sort === "title" ? a.title.localeCompare(b.title) : b.openedAt - a.openedAt));
 
   useEffect(() => onProjectsChanged(() => setProjects(recentProjects())), []);
 
@@ -89,6 +95,7 @@ export default function Home() {
               >
                 <div className="n-panel flex items-end gap-2 p-2 pl-4 shadow-[var(--n-shadow-2)] focus-within:border-n-leaf">
                   <textarea
+                    ref={ideaRef}
                     value={idea}
                     onChange={(e) => setIdea(e.target.value)}
                     onKeyDown={(e) => {
@@ -122,7 +129,7 @@ export default function Home() {
               <ul className="mt-5 flex flex-wrap gap-2">
                 {IDEAS.map((text) => (
                   <li key={text}>
-                    <button type="button" onClick={() => setIdea(text)} className="rounded-full border border-n-line bg-n-surface/80 px-3.5 py-1.5 text-[13px] text-n-ink-2 backdrop-blur transition-colors hover:border-n-leaf hover:bg-n-leaf-soft hover:text-n-moss">
+                    <button type="button" onClick={() => { setIdea(text); ideaRef.current?.focus(); }} className="rounded-full border border-n-line bg-n-surface/80 px-3.5 py-2 text-[13px] text-n-ink-2 backdrop-blur transition-colors hover:border-n-leaf hover:bg-n-leaf-soft hover:text-n-moss">
                       {text}
                     </button>
                   </li>
@@ -136,14 +143,28 @@ export default function Home() {
               <h2 className="n-display text-[28px]">Your boards</h2>
               <p className="hidden text-sm text-n-ink-3 sm:block">Saved in this browser. Anyone with a board's link can open it.</p>
             </div>
+            {projects.length > 0 && (
+              <div className="mb-5 flex flex-wrap items-center gap-2">
+                <input value={query} onChange={(e) => setQuery(e.target.value)} type="search" aria-label="Search your boards" placeholder="Search boards…" className="n-field !w-64 max-w-full" />
+                <select value={sort} onChange={(e) => setSort(e.target.value as "recent" | "title")} aria-label="Sort boards" className="n-field !w-auto">
+                  <option value="recent">Recently opened</option>
+                  <option value="title">Title A–Z</option>
+                </select>
+                {query.trim() && <span className="text-sm text-n-ink-3" role="status">{visibleProjects.length} found</span>}
+              </div>
+            )}
+            <div className="hidden">
+            </div>
             <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               <li>
                 <NewBoardCard />
               </li>
-              {projects.map((p) => (
+              {visibleProjects.map((p) => (
                 <li key={p.id} className="group relative">
                   <a href={projectHref(p.id)} className="n-panel block overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-[var(--n-shadow-2)]">
-                    <img src={coverFor(p.id)} alt="" className="aspect-[3/2] w-full object-cover" />
+                    <span className="grid aspect-[3/2] w-full place-items-center" style={{ backgroundColor: tintFor(p.id) }} aria-hidden="true">
+                      <span className="n-display text-[64px] text-white/95">{p.title.trim().slice(0, 1).toUpperCase() || "N"}</span>
+                    </span>
                     <div className="px-4 py-3.5">
                       <h3 className="n-display truncate text-[19px]">{p.title}</h3>
                       <p className="mt-0.5 flex items-center gap-1 text-[12.5px] text-n-ink-3">
@@ -157,7 +178,7 @@ export default function Home() {
                     aria-label={`Remove ${p.title} from this list`}
                     title="Remove from this list. The board and its link keep working."
                     onClick={() => forgetProject(p.id)}
-                    className="n-btn n-btn--icon n-btn--sm absolute top-3 right-3 bg-n-surface/90 text-n-ink-2 opacity-0 backdrop-blur group-hover:opacity-100 focus:opacity-100"
+                    className="n-btn n-btn--icon n-btn--sm absolute top-3 right-3 bg-n-surface/90 text-n-ink-2 opacity-80 backdrop-blur group-hover:opacity-100 focus:opacity-100 lg:opacity-0"
                   >
                     <CloseIcon />
                   </button>
@@ -165,6 +186,7 @@ export default function Home() {
               ))}
             </ul>
             {projects.length === 0 && <p className="mt-6 max-w-md text-[15px] leading-6 text-n-ink-3">Nothing here yet. Describe an idea above, or start from a blank board.</p>}
+            {projects.length > 0 && visibleProjects.length === 0 && <p className="mt-6 text-[15px] text-n-ink-3" role="status">No boards match “{query}”. Try a different search.</p>}
           </section>
         </div>
       </main>

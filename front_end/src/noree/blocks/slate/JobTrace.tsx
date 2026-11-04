@@ -10,7 +10,7 @@ const STATUS_COLOR: Record<string, string> = {
 export function JobTrace({ job, running, now }: { job: JobView | undefined; running: boolean; now: number }) {
   const stale = job ? isStale(job, now) : false;
   return (
-    <aside aria-label="AI activity" className="hidden w-80 shrink-0 flex-col overflow-hidden rounded-xl border border-n-line bg-n-surface md:flex">
+    <aside aria-label="AI activity" className="flex max-h-44 w-full shrink-0 flex-col overflow-hidden rounded-xl border border-n-line bg-n-surface md:max-h-none md:w-80">
       <h2 className="border-b border-n-line-soft px-3 py-2 font-mono text-[11px] tracking-widest text-n-ink-3 uppercase">AI activity</h2>
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2 text-[13px]">
         {!job && <p className="text-n-ink-3">Each step the agent takes shows up here, for everyone on the board.</p>}

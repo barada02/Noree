@@ -49,8 +49,8 @@ function EditableTitle({ id, title, className }: { id: string; title: string; cl
 }
 
 export function BlockNode({ id, data, selected }: Props) {
-  const { doc, peerSelections, sourceCounts } = useBoardContext();
-  const { Preview, Icon, label } = BLOCK_BY_TYPE[data.blockType];
+  const { doc, peerSelections, sourceCounts, onOpenBlock } = useBoardContext();
+  const { Preview, Icon, label, hasFocus } = BLOCK_BY_TYPE[data.blockType];
   const peerColor = peerSelections[id];
   const sources = sourceCounts[id] ?? 0;
   return (
@@ -69,6 +69,11 @@ export function BlockNode({ id, data, selected }: Props) {
           </span>
           <EditableTitle id={id} title={data.title} className="n-block__title" />
           <span className="n-block__meta">
+            {hasFocus && onOpenBlock && (
+              <button type="button" onClick={(e) => { e.stopPropagation(); onOpenBlock(id, data.blockType); }} onDoubleClick={(e) => e.stopPropagation()} className="nodrag n-btn n-btn--soft n-btn--sm" aria-label={`Open ${data.title}`}>
+                Open
+              </button>
+            )}
             {sources > 0 && (
               <span data-source-count={sources} className="n-chip">
                 {sources === 1 ? "1 source" : `${sources} sources`}

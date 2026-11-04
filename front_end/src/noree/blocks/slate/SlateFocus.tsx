@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Y from "yjs";
 import type { Pt, Stroke } from "../../../shared/protocol.js";
 import { applyAction } from "../../../shared/actions.js";
@@ -11,6 +11,7 @@ import { SlatePageCanvas, type Tool } from "./SlatePageCanvas";
 import { isStale, useBlockJobs } from "../../doc/useJobs";
 import { slateHandles, useCurrentPage, usePageContents } from "./useSlate";
 import { WidgetStateProvider } from "./widgetState";
+import { useDialogFocus } from "../../shell/useDialogFocus";
 
 const MAX_PASTE_WIDTH = 640;
 const MAX_TEXT_LENGTH = 4000;
@@ -51,6 +52,8 @@ function imageSize(file: Blob): Promise<{ w: number; h: number }> {
 
 /** The full-screen Slate: writing, pasting, pages, and running the AI on the current page. */
 export function SlateFocus({ doc, id, projectId, actor, personName, undo, onClose }: Props) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef);
   const handles = useMemo(() => slateHandles(doc, id), [doc, id]);
   const { page, index, count } = useCurrentPage(handles);
   const { types, strokes, objects, pastes } = usePageContents(page);
@@ -247,7 +250,7 @@ export function SlateFocus({ doc, id, projectId, actor, personName, undo, onClos
   const toolButton = (value: Tool) => (tool === value ? `${buttonBase} !border-n-moss` : buttonBase);
 
   return (
-    <div role="dialog" aria-label={`${blockTitle}, focus mode`} className="fixed inset-0 z-50 flex flex-col bg-n-bg text-n-ink">
+    <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`${blockTitle}, focus mode`} className="fixed inset-0 z-50 flex flex-col bg-n-bg text-n-ink outline-none">
       <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-n-line-soft bg-n-surface/90 px-4 py-2.5 backdrop-blur">
         <span className="n-display mr-2 max-w-56 truncate text-[19px]">{blockTitle}</span>
         <button type="button" className={toolButton("pen")} aria-pressed={tool === "pen"} onClick={() => setTool("pen")}>
@@ -256,13 +259,13 @@ export function SlateFocus({ doc, id, projectId, actor, personName, undo, onClos
         <button type="button" className={toolButton("eraser")} aria-pressed={tool === "eraser"} onClick={() => setTool("eraser")}>
           Eraser
         </button>
-        <button type="button" className={buttonBase} disabled={!undo.canUndo} onClick={undo.undo}>
+        <button type="button" className={buttonBase} disabled={!undo.canUndo} onClick={undo.undo} title="Undo your own last change">
           Undo
         </button>
         <button type="button" className={buttonBase} disabled={!undo.canRedo} onClick={undo.redo}>
           Redo
         </button>
-        <button type="button" className={buttonBase} disabled={!hasAi || running} onClick={undoAi}>
+        <button type="button" className={buttonBase} disabled={!hasAi || running} onClick={undoAi} title="Remove what the AI added on this page">
           Undo AI
         </button>
         <span className="mx-1 flex items-center gap-1" aria-label="Pages">
@@ -280,6 +283,10 @@ export function SlateFocus({ doc, id, projectId, actor, personName, undo, onClos
           </button>
         </span>
         <span className="ml-auto flex flex-wrap items-center gap-2">
+          <details className="relative">
+            <summary className="n-btn n-btn--outline n-btn--sm cursor-pointer list-none">Advanced</summary>
+            <div className="n-float absolute right-0 z-20 mt-2 w-64 rounded-2xl p-3">
+              <span className="n-eyebrow block">AI engine</span>
           <select
             aria-label="Model"
             value={provider}
@@ -289,6 +296,8 @@ export function SlateFocus({ doc, id, projectId, actor, personName, undo, onClos
             <option value="baseten">Open weights, Baseten</option>
             <option value="meta">Meta API</option>
           </select>
+            </div>
+          </details>
           <input
             value={instruction}
             onChange={(e) => setInstruction(e.target.value)}
@@ -308,6 +317,7 @@ export function SlateFocus({ doc, id, projectId, actor, personName, undo, onClos
             <button
               type="button"
               disabled={!hasContent || starting}
+              title={!hasContent ? "Write or paste something on the page first" : undefined}
               onClick={() => void ask()}
               className="n-btn n-btn--primary n-btn--sm"
             >
@@ -324,7 +334,7 @@ export function SlateFocus({ doc, id, projectId, actor, personName, undo, onClos
           {error}
         </p>
       )}
-      <div className="flex min-h-0 flex-1 gap-3 p-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 p-3 md:flex-row">
         <main className="slate-scope relative min-w-0 flex-1 overflow-hidden rounded-2xl border border-n-line-soft bg-n-surface shadow-[var(--n-shadow-1)]">
           <WidgetStateProvider map={types.widgetValues}>
             <SlatePageCanvas strokes={strokes} objects={objects} pastes={pastes} tool={tool} onAddStroke={addStroke} onEraseStroke={eraseStroke} onMovePaste={movePaste} />

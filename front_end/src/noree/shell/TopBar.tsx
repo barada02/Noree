@@ -45,6 +45,40 @@ function ProjectTitle({ doc, projectId }: { doc: Y.Doc; projectId: string }) {
   );
 }
 
+function HelpButton() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} aria-label="Help and shortcuts" title="Help and shortcuts" className="n-btn n-btn--ghost n-btn--icon n-btn--sm shrink-0 text-n-ink-2">
+        <span aria-hidden="true" className="text-base font-bold">?</span>
+      </button>
+      {open && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/30 p-4" role="presentation" onClick={() => setOpen(false)}>
+          <div role="dialog" aria-modal="true" aria-label="Help and shortcuts" className="n-panel n-rise w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4">
+              <h2 className="n-display text-[22px]">Working on a board</h2>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close help" className="n-btn n-btn--ghost n-btn--icon n-btn--sm shrink-0">✕</button>
+            </div>
+            <ul className="mt-4 space-y-2.5 text-[14px] leading-6 text-n-ink-2">
+              <li><strong className="text-n-ink">Open a block:</strong> double-click it, or use its Open button.</li>
+              <li><strong className="text-n-ink">Connect blocks:</strong> drag from the dot on the right of one block to the dot on the left of another. The second block reads from the first.</li>
+              <li><strong className="text-n-ink">Rename:</strong> double-click a block or frame title.</li>
+              <li><strong className="text-n-ink">Group:</strong> drag a block into a frame.</li>
+              <li><strong className="text-n-ink">Delete:</strong> select, then press Delete. Undo brings it back.</li>
+            </ul>
+            <h3 className="n-eyebrow mt-5 mb-2">Shortcuts</h3>
+            <ul className="space-y-1.5 text-[14px] text-n-ink-2">
+              <li><kbd>Ctrl/⌘ Z</kbd> undo · <kbd>Ctrl/⌘ Shift Z</kbd> redo</li>
+              <li><kbd>Delete</kbd> remove selected · <kbd>Esc</kbd> close a block</li>
+              <li><kbd>Enter</kbd> send to the AI · <kbd>Shift Enter</kbd> new line</li>
+            </ul>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function ConnectionStatus({ status }: { status: WebSocketStatus }) {
   const view = {
     [WebSocketStatus.Connected]: { label: "Live", dot: "bg-n-leaf" },
@@ -54,7 +88,12 @@ function ConnectionStatus({ status }: { status: WebSocketStatus }) {
   return (
     <span data-connection={status} title={view.label} className="flex items-center gap-1.5 text-xs font-medium text-n-ink-3">
       <span className={`h-2 w-2 rounded-full ${view.dot} ${status === WebSocketStatus.Connected ? "" : "n-breathe"}`} />
-      <span className="hidden 2xl:inline">{view.label}</span>
+      <span className={status === WebSocketStatus.Connected ? "hidden 2xl:inline" : "inline"}>{view.label}</span>
+      {status === WebSocketStatus.Disconnected && (
+        <button type="button" onClick={() => window.location.reload()} className="font-semibold text-n-danger underline underline-offset-2">
+          Retry
+        </button>
+      )}
     </span>
   );
 }
@@ -107,7 +146,7 @@ export function TopBar({ doc, mode, onModeChange, panelOpen, onTogglePanel, proj
         <Mark size={22} />
       </a>
       <ProjectTitle doc={doc} projectId={projectId} />
-      <span className="flex shrink-0 items-center">
+      <span className="hidden shrink-0 items-center sm:flex">
         <button type="button" aria-label="Undo" title="Undo your last change (Ctrl+Z)" disabled={!undo.canUndo} onClick={undo.undo} className="n-btn n-btn--ghost n-btn--icon n-btn--sm text-n-ink-2">
           <UndoIcon />
         </button>
@@ -124,12 +163,12 @@ export function TopBar({ doc, mode, onModeChange, panelOpen, onTogglePanel, proj
       </span>
       <a href={`/api/projects/${projectId}/export.md`} download aria-label="Export" title="Download this board as Markdown" className="n-btn n-btn--outline n-btn--sm shrink-0">
         <DownloadIcon />
-        <span className="hidden 2xl:inline">Export</span>
+        <span className="hidden sm:inline">Export</span>
       </a>
       <span className="ml-auto flex shrink-0 items-center gap-2 lg:gap-3">
         <ConnectionStatus status={status} />
         <span className="flex -space-x-2" aria-label="People on this board">
-          {presence.peers.map((p) => (
+          {presence.peers.slice(0, 4).map((p) => (
             <span key={p.clientId} title={p.name} data-peer={p.name} className="grid h-8 w-8 place-items-center rounded-full text-[12px] font-bold text-white ring-2 ring-n-bg" style={{ backgroundColor: p.color }}>
               {initialOf(p.name)}
             </span>
@@ -138,9 +177,15 @@ export function TopBar({ doc, mode, onModeChange, panelOpen, onTogglePanel, proj
         {mode === "board" && (
           <button type="button" aria-label="AI" aria-pressed={panelOpen} onClick={onTogglePanel} title="Show or hide the AI panel" className="n-btn n-btn--outline n-btn--sm shrink-0">
             <SparkIcon />
-            <span className="hidden 2xl:inline">AI</span>
+            <span className="hidden sm:inline">AI</span>
           </button>
         )}
+        {presence.peers.length > 4 && (
+            <span title={presence.peers.slice(4).map((p) => p.name).join(", ")} className="grid h-8 min-w-8 place-items-center rounded-full bg-n-sunken px-1 text-[11px] font-bold text-n-ink-2 ring-2 ring-n-bg">
+              +{presence.peers.length - 4}
+            </span>
+          )}
+        <HelpButton />
         <ProfileMenu name={presence.name} color={presence.color} onRename={presence.rename} />
         <ShareButton />
       </span>
