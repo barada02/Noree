@@ -62,8 +62,14 @@ export default function Landing() {
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <a
-            href="#/blocknote"
+            href="#/app"
             className="rounded-md bg-black px-5 py-2.5 text-sm font-medium text-white dark:bg-white dark:text-black"
+          >
+            Open the app
+          </a>
+          <a
+            href="#/blocknote"
+            className="rounded-md border border-black px-5 py-2.5 text-sm font-medium dark:border-white"
           >
             Try the editor
           </a>

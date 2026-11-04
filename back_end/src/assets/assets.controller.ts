@@ -42,7 +42,8 @@ export class AssetsController {
     if (!path) throw new NotFoundException();
     res.sendFile(path, {
       headers: {
-        'Content-Type': IMAGE_TYPES[file.split('.')[1]],
+        // Generated code is served as plain text, so it can only ever run inside the sandboxed iframe.
+        'Content-Type': IMAGE_TYPES[file.split('.')[1]] ?? 'text/plain; charset=utf-8',
         'X-Content-Type-Options': 'nosniff',
         // Names are content hashes, so a file at a given URL never changes.
         'Cache-Control': 'public, max-age=31536000, immutable',

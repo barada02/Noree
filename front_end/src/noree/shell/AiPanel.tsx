@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as Y from "yjs";
 import { docParts, readEdge, readLayout, type ActorRef, type Message } from "../../shared/schema.js";
-import { isStale, useBlockJobs } from "../blocks/slate/useSlate";
+import { isStale, useBlockJobs } from "../doc/useJobs";
 import { useYValue } from "../doc/useY";
 import { cancelJob, startChat } from "../lib/api";
 import { renderRich } from "../lib/rich";
@@ -170,7 +170,7 @@ function PanelContent({ doc, projectId, selectedIds, actor, personName, only }: 
   const chatBlock = selected && selected.type !== "frame" ? selected : null;
 
   return (
-    <aside aria-label="AI panel" className="hidden w-80 shrink-0 flex-col border-l border-stone-200 bg-white lg:flex dark:border-stone-800 dark:bg-stone-950">
+    <aside aria-label="AI panel" className="absolute inset-y-0 right-0 z-20 flex w-80 max-w-full shrink-0 flex-col border-l border-stone-200 bg-white lg:static dark:border-stone-800 dark:bg-stone-950">
       <h2 className="truncate border-b border-stone-200 px-3 py-2 text-sm font-medium dark:border-stone-800">{chatBlock ? chatBlock.title : "AI"}</h2>
       {chatBlock ? (
         // The key gives each block its own draft and scroll position.

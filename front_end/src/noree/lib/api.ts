@@ -45,6 +45,16 @@ export async function startChat(projectId: string, blockId: string, body: { text
   return ((await res.json()) as { jobId: string }).jobId;
 }
 
+export async function generateModel(projectId: string, blockId: string, body: { person: { id: string; name: string } }): Promise<string> {
+  const res = await fetch(`/api/projects/${projectId}/blocks/${blockId}/generate`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw await failure(res, "Generation couldn't start. Try again.");
+  return ((await res.json()) as { jobId: string }).jobId;
+}
+
 export async function cancelJob(projectId: string, jobId: string): Promise<void> {
   await fetch(`/api/projects/${projectId}/jobs/${jobId}/cancel`, { method: "POST" });
 }

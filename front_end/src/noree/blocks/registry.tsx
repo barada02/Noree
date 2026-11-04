@@ -1,8 +1,9 @@
 import type { ComponentType, ReactNode } from "react";
 import * as Y from "yjs";
-import { docParts, type BlockType } from "../../shared/schema.js";
-import { YTextArea } from "../doc/YTextArea";
+import type { BlockType } from "../../shared/schema.js";
+import { Model3dPreview } from "./model3d/Model3dPreview";
 import { SlatePreview } from "./slate/SlatePreview";
+import { StickyPreview, TextPreview } from "./text/TextBlocks";
 
 export type BlockProps = { doc: Y.Doc; id: string };
 
@@ -15,35 +16,13 @@ export type BlockDefinition = {
   hasFocus?: boolean;
 };
 
-function TextContent({ doc, id, placeholder, className }: BlockProps & { placeholder: string; className: string }) {
-  const text = docParts(doc).content.get(id)?.get("text");
-  if (!(text instanceof Y.Text)) return null;
-  return <YTextArea text={text} placeholder={placeholder} className={className} />;
-}
-
-function TextPreview(props: BlockProps) {
-  return <TextContent {...props} placeholder="Write something" className="px-3 py-2 text-sm leading-6" />;
-}
-
-function StickyPreview(props: BlockProps) {
-  return <TextContent {...props} placeholder="Quick note" className="px-3 py-2 text-[15px] leading-6" />;
-}
-
-/** Replaced by the real Slate at M3 and the real 3D block at M5. */
-function Placeholder({ label }: { label: string }) {
-  return (
-    <div className="flex h-full items-center justify-center font-mono text-[11px] tracking-widest text-stone-400 uppercase">
-      {label}
-    </div>
-  );
-}
-
 const icon = (path: ReactNode) => (
   <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     {path}
   </svg>
 );
 
+/** Adding a block type means one component folder and one entry here. */
 export const BLOCKS: BlockDefinition[] = [
   {
     type: "slate",
@@ -68,7 +47,8 @@ export const BLOCKS: BlockDefinition[] = [
     type: "model3d",
     label: "3D model",
     icon: icon(<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9" />),
-    Preview: () => <Placeholder label="3D model" />,
+    Preview: Model3dPreview,
+    hasFocus: true,
   },
   {
     type: "frame",

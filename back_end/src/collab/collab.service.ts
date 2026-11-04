@@ -74,6 +74,20 @@ export class CollabService implements BeforeApplicationShutdown {
     return this.server.hocuspocus.openDirectConnection(this.store.docName(projectId), context);
   }
 
+  /** Reads the live document, loading it if nobody has it open. */
+  async read<T>(projectId: string, reader: (doc: Y.Doc) => T): Promise<T> {
+    const connection = await this.open(projectId);
+    try {
+      let result: T | undefined;
+      await connection.transact((doc) => {
+        result = reader(doc);
+      });
+      return result as T;
+    } finally {
+      await connection.disconnect();
+    }
+  }
+
   beforeApplicationShutdown() {
     // Save anything waiting on its delay. Open WebSockets would also keep the HTTP server from
     // closing. Browsers reconnect on their own when the server comes back.

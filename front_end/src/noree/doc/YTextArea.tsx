@@ -37,7 +37,6 @@ export function YTextArea({ text, placeholder, className }: Props) {
       }
       setValue(text.toString());
     };
-    setValue(text.toString());
     text.observe(onChange);
     return () => text.unobserve(onChange);
   }, [text]);

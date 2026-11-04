@@ -53,6 +53,8 @@ export interface Model3dVersion {
   codeAsset: string;
   previewAsset: string | null;
   inputHash: string;
+  /** What the 3D service was asked to build. */
+  brief?: string;
   createdBy: ActorRef;
   createdAt: number;
 }

@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { ProjectsStore } from '../collab/projects.store.js';
 
 const HOUR_MS = 3_600_000;
-const ASSET_FILE = /^[a-f0-9]{32}\.(png|jpg|webp)$/;
+const ASSET_FILE = /^[a-f0-9]{32}\.(png|jpg|webp|js)$/;
 const ASSET_URL = /^\/api\/assets\/([a-f0-9]{48})\/([a-f0-9]{32}\.(?:png|jpg|webp))$/;
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -50,6 +50,17 @@ export class AssetsService {
       renameSync(`${file}.tmp`, file);
     }
     return `/api/assets/${projectId}/${name}`;
+  }
+
+  /** A stored picture from the server's own work, such as a 3D preview. Null if it isn't really an image. */
+  saveImage(projectId: string, data: Buffer): string | null {
+    const extension = imageExtension(data);
+    return extension ? this.save(projectId, data, extension) : null;
+  }
+
+  /** Generated code. Only the server calls this: the upload route accepts images only. */
+  saveCode(projectId: string, code: string): string {
+    return this.save(projectId, Buffer.from(code, 'utf8'), 'js');
   }
 
   /** The file on disk for a request, or null if the names aren't ours. */

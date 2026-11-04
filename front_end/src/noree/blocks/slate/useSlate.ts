@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import * as Y from "yjs";
 import type { AiObject, Stroke } from "../../../shared/protocol.js";
-import { docParts, type JobStep, type PageItem } from "../../../shared/schema.js";
+import { docParts, type PageItem } from "../../../shared/schema.js";
 
 export type SlateHandles = {
   content: Y.Map<unknown>;
@@ -83,44 +83,4 @@ export function usePageContents(page: Y.Map<unknown> | null) {
   }, [types]);
 
   return { types, strokes, objects, pastes };
-}
-
-export type JobView = {
-  id: string;
-  status: "running" | "done" | "failed" | "cancelled";
-  steps: JobStep[];
-  error?: string;
-  pageId?: string;
-  startedAt: number;
-  heartbeatAt: number;
-  startedBy?: { name: string };
-};
-
-const STALE_AFTER_MS = 60_000;
-
-/** A run with no heartbeat for a minute has died, so nobody waits on it forever. */
-export function isStale(job: JobView, now: number) {
-  return job.status === "running" && now - job.heartbeatAt > STALE_AFTER_MS;
-}
-
-/** This block's runs, newest first. */
-export function useBlockJobs(doc: Y.Doc, blockId: string): JobView[] {
-  const { jobs } = useMemo(() => docParts(doc), [doc]);
-  const [list, setList] = useState<JobView[]>([]);
-
-  useEffect(() => {
-    const update = () => {
-      const next: JobView[] = [];
-      jobs.forEach((job) => {
-        if (job.get("blockId") === blockId) next.push(job.toJSON() as JobView);
-      });
-      next.sort((a, b) => b.startedAt - a.startedAt);
-      setList(next);
-    };
-    update();
-    jobs.observeDeep(update);
-    return () => jobs.unobserveDeep(update);
-  }, [jobs, blockId]);
-
-  return list;
 }

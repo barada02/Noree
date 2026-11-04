@@ -152,6 +152,24 @@ describe('collaboration server', () => {
     expect(readdirSync(join(dataDir, 'docs')).filter((f) => f !== `${known}.bin`)).toEqual([]);
   });
 
+  it('exports the board as Markdown, even when nobody has it open', async () => {
+    const id = await newProject('Export me');
+    const { doc } = await connect(id);
+    const blockId = applyAction(doc, { type: 'block.add', blockType: 'text', title: 'Notes' }, person).id!;
+    (docParts(doc).content.get(blockId)!.get('text') as Y.Text).insert(0, 'hello world');
+    await new Promise((r) => setTimeout(r, 100));
+    closeProviders();
+    await new Promise((r) => setTimeout(r, 100));
+
+    const res = await request(app.getHttpServer() as HttpServer).get(`/projects/${id}/export.md`).expect(200);
+    expect(res.headers['content-type']).toContain('text/markdown');
+    expect(res.headers['content-disposition']).toContain('Export me.md');
+    expect(res.text).toContain('# Export me');
+    expect(res.text).toContain('### Notes');
+    expect(res.text).toContain('hello world');
+    await request(app.getHttpServer() as HttpServer).get(`/projects/${'a'.repeat(48)}/export.md`).expect(404);
+  });
+
   it('limits new projects per hour', async () => {
     process.env.PROJECTS_MAX_PER_HOUR = '1';
     await newProject();
