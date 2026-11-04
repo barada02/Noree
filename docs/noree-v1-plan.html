@@ -129,8 +129,8 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
   <div class="facts">
     <div class="fact"><b>Thu Nov 5, 7:30 AM IST</b><span>Submission and credit claim deadline</span></div>
     <div class="fact"><b id="countdown">15 hours</b><span>Time left, as of when you opened this</span></div>
-    <div class="fact"><b>M5 next</b><span>M0 to M3 verified, M4 verified locally, 3D service running</span></div>
-    <div class="fact"><b>Rev 6</b><span>Wed Nov 4, 2026, 19:40 IST</span></div>
+    <div class="fact"><b>Ready to ship</b><span>M0 to M4 live, M5 to M7 verified locally</span></div>
+    <div class="fact"><b>Rev 7</b><span>Wed Nov 4, 2026, 20:35 IST</span></div>
   </div>
 </header>
 
@@ -146,10 +146,10 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
     <tr><td>M1 Board</td><td>18:00 to 19:15</td><td>Projects, blocks and frames that survive a refresh</td><td><span class="pill done">done</span></td></tr>
     <tr><td>M2 Multiplayer</td><td>19:15 to 20:30</td><td>Two browsers in sync <strong>on the live server</strong></td><td><span class="pill done">done</span></td></tr>
     <tr><td>M3 Slate</td><td>20:30 to 22:30</td><td>Handwriting and AI inside a block, with pages</td><td><span class="pill done">done</span></td></tr>
-    <tr><td>M4 Connections, chat</td><td>22:30 to 23:45</td><td>A line gives a block's chat real context</td><td><span class="pill doing">live test next</span></td></tr>
-    <tr><td>M5 3D block</td><td>23:45 to 01:00</td><td>Slate connected to 3D, Generate works live</td><td><span class="pill todo">todo</span></td></tr>
-    <tr><td>M6 Read, export</td><td>01:00 to 01:30</td><td>Read view and Markdown export</td><td><span class="pill todo">todo</span></td></tr>
-    <tr><td>M7 Polish</td><td>01:30 to 03:00</td><td>Demo script runs twice on production</td><td><span class="pill todo">todo</span></td></tr>
+    <tr><td>M4 Connections, chat</td><td>22:30 to 23:45</td><td>A line gives a block's chat real context</td><td><span class="pill done">done</span></td></tr>
+    <tr><td>M5 3D block</td><td>23:45 to 01:00</td><td>Slate connected to 3D, Generate works live</td><td><span class="pill doing">live test next</span></td></tr>
+    <tr><td>M6 Read, export</td><td>01:00 to 01:30</td><td>Read view and Markdown export</td><td><span class="pill done">done, live test next</span></td></tr>
+    <tr><td>M7 Polish</td><td>01:30 to 03:00</td><td>Demo script runs twice on production</td><td><span class="pill doing">rehearsal next</span></td></tr>
     <tr><td>Video, README</td><td>03:00 to 05:30</td><td>Recorded and uploaded</td><td><span class="pill todo">todo</span></td></tr>
     <tr><td>Submit</td><td>by 06:30</td><td>One hour of buffer before the deadline</td><td><span class="pill todo">todo</span></td></tr>
   </table></div>
@@ -219,6 +219,9 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
     <tr><td>Text block</td><td>Not specified</td><td>Plain text on <code>Y.Text</code></td><td>Small and reliable. A BlockNote doc block comes after V1.</td></tr>
     <tr><td>Pasted items and the agent</td><td>Not specified</td><td>Each paste counts as ink through an outline stroke, and the snapshot shows what it really is</td><td>The agent can point at a paste and never places anything on top of it, with no change to the agent.</td></tr>
     <tr><td>Who writes the user's chat message</td><td>Client action</td><td>The server, when the job starts</td><td>A refused or rate-limited question leaves no orphan message in the thread.</td></tr>
+    <tr><td>3D fallback for the demo</td><td>Labeled option to load a registry entry</td><td>Generate before recording, and keep versions</td><td>The registry is shared across projects, so listing it would leak other projects' prompts.</td></tr>
+    <tr><td>3D briefs</td><td>Up to 120 words, specific</td><td>Up to 60 words, describing the object only</td><td>Over-specified briefs failed a strict reviewer on details nobody asked for. The same test went from Draft after 3 attempts to approved on the first.</td></tr>
+    <tr><td>Fingerprints</td><td>Server only</td><td>Shared code, used by both</td><td>The browser shows the out-of-date badge from the live document, with no extra requests.</td></tr>
     <tr><td>Frame growth</td><td>Grows as a block moves</td><td>Grows when a block is dropped</td><td>Growing during a drag would make it impossible to drag a block out.</td></tr>
     <tr><td>Project rename</td><td><code>PATCH /projects/:id</code></td><td>Written to the document, and the server copies it to <code>projects.json</code> on save</td><td>Syncs to everyone like any other edit, with no extra endpoint.</td></tr>
   </table></div>
@@ -656,7 +659,7 @@ generate-3d -> brief step, then agent-sandbox</code></pre>
     <tr><td><code>SANDBOX_URL</code></td><td>Nest</td><td>Default <code>http://127.0.0.1:8000</code></td></tr>
     <tr><td><code>DATA_DIR</code></td><td>Nest</td><td>Default <code>./data</code></td></tr>
     <tr><td><code>PROJECTS_MAX_PER_HOUR</code>, <code>ASSETS_MAX_PER_HOUR</code></td><td>Nest</td><td>Defaults 200 and 1000</td></tr>
-    <tr><td><code>AI_ENABLED</code>, <code>AI_MAX_RUNS_PER_HOUR</code>, <code>GEN3D_MAX_RUNS_PER_HOUR</code></td><td>Nest</td><td>Kill switch and spend limits</td></tr>
+    <tr><td><code>AI_ENABLED</code>, <code>AI_MAX_RUNS_PER_HOUR</code>, <code>GEN3D_MAX_RUNS_PER_HOUR</code></td><td>Nest</td><td>Kill switch and limits. Defaults: on, 120, 30</td></tr>
   </table></div>
   <h3>Local development</h3>
 <pre><code>cd back_end  &amp;&amp; npm run start:dev    # :3000, reads back_end/.env
@@ -683,6 +686,7 @@ node scripts/sync-shared.mjs --watch # while editing shared/
     <tr><td>Script injection through AI text</td><td><code>renderRich</code> escapes text before inserting it and KaTeX runs in safe mode (checked). Graph expressions use the existing safe parser, with no <code>eval</code></td></tr>
     <tr><td>Pasted image pointing elsewhere</td><td>Only same-origin <code>/api/assets/</code> URLs are rendered</td></tr>
     <tr><td>Crashed job hangs forever</td><td>No heartbeat for 60 seconds marks it failed</td></tr>
+    <tr><td>One bad block breaking the board</td><td>An error boundary around each block, and one around the board</td></tr>
   </table></div>
   <p class="note"><strong>Known limit:</strong> anyone with a link can edit that board, and <code>projects.json</code> and documents sit on one disk with no backup in V1.</p>
 </section>
@@ -761,28 +765,29 @@ node scripts/sync-shared.mjs --watch # while editing shared/
       <li><input type="checkbox" disabled checked> Chat endpoint using block and connected context</li>
     </ul>
     <p class="dw"><strong>Done when:</strong> a question on a Text block connected to a Slate gets an answer that correctly uses what was handwritten.</p>
-    <p class="dw"><strong>Verified locally Nov 4, 19:35:</strong> a real model read a handwritten <code>x = 7</code> through a connection and answered 7 in 16 s, and a second browser saw the conversation. <strong>Still open:</strong> the same on the live site, after the next deploy.</p>
+    <p class="dw"><strong>Verified live Nov 4, 19:49:</strong> on <code>kanya.alito.tech</code>, a real model read a handwritten <code>x = 7</code> through a connection and answered 7 in 12 s, and a second browser saw the conversation.</p>
   </div>
 
   <div class="milestone">
     <h3>M5 3D block <span class="when">23:45 to 01:00</span></h3>
     <ul>
-      <li><input type="checkbox" disabled> Prompt field and Generate button</li>
-      <li><input type="checkbox" disabled> <code>generate3d</code>: brief, then <code>agent-sandbox</code>, with long timeout</li>
-      <li><input type="checkbox" disabled> Live progress in the block and panel</li>
-      <li><input type="checkbox" disabled> Versions with Approved or Draft badge, preview on the board, live view in focus mode</li>
-      <li><input type="checkbox" disabled> Out-of-date badge and Regenerate</li>
+      <li><input type="checkbox" disabled checked> Prompt field and Generate button</li>
+      <li><input type="checkbox" disabled checked> <code>generate3d</code>: brief, then <code>agent-sandbox</code>, with long timeout</li>
+      <li><input type="checkbox" disabled checked> Live progress in the block and panel</li>
+      <li><input type="checkbox" disabled checked> Versions with Approved or Draft badge, preview on the board, live view in focus mode</li>
+      <li><input type="checkbox" disabled checked> Out-of-date badge and Regenerate</li>
       <li><input type="checkbox" disabled checked> Sandbox on the server (G5): package, pm2 app, Modal tokens. Runs on arm64, and its Modal probe passes</li>
     </ul>
     <p class="dw"><strong>Done when:</strong> connecting a Slate to a 3D block and pressing Generate makes a model reflecting the Slate, while a second browser watches the same progress.</p>
-    <p class="gate"><strong>Demo safety:</strong> because Modal can be slow or fail, add a clearly labeled option to load an existing registry entry. If it's used in the video, say so.</p>
+    <p class="dw"><strong>Verified locally Nov 4, 20:25:</strong> with the real service and Modal, a Slate's content became a brief and a model that passed review on attempt 1 in 69 s. A second browser watched the same progress, live 3D rendered, and the out-of-date badge worked for both people. <strong>Still open:</strong> the same on the live site.</p>
+    <p class="gate"><strong>Demo safety:</strong> because Modal can be slow or fail, generate before recording. Every version is kept in the block, so a good result stays available. This replaces a shared "load from library" list, which would have shown one project's models and prompts to everyone.</p>
   </div>
 
   <div class="milestone">
     <h3>M6 Read and export <span class="when">01:00 to 01:30</span></h3>
     <ul>
-      <li><input type="checkbox" disabled> Read view: frames in order, then blocks by position</li>
-      <li><input type="checkbox" disabled> Markdown export, with Slate pages as images plus transcript</li>
+      <li><input type="checkbox" disabled checked> Read view: frames in order, then blocks by position</li>
+      <li><input type="checkbox" disabled checked> Markdown export, with Slate pages as images plus transcript</li>
     </ul>
     <p class="dw"><strong>Done when:</strong> moving a block changes both the Read view and the export.</p>
   </div>
@@ -790,8 +795,8 @@ node scripts/sync-shared.mjs --watch # while editing shared/
   <div class="milestone">
     <h3>M7 Polish and rehearse <span class="when">01:30 to 03:00</span></h3>
     <ul>
-      <li><input type="checkbox" disabled> Empty, error and loading states for each block</li>
-      <li><input type="checkbox" disabled> Landing page link into the product</li>
+      <li><input type="checkbox" disabled checked> Empty, error and loading states for each block</li>
+      <li><input type="checkbox" disabled checked> Landing page link into the product</li>
       <li><input type="checkbox" disabled> Seed a demo project, set spend limits</li>
       <li><input type="checkbox" disabled> Run the demo script twice on production</li>
     </ul>

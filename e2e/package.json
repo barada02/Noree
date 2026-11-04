@@ -4,6 +4,6 @@
   "type": "module",
   "description": "Browser tests for Noree. See README.md.",
   "dependencies": {
-    "playwright-core": "^1.50.0"
+    "playwright-core": "^1.64.1"
   }
 }
