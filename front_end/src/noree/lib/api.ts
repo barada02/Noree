@@ -35,6 +35,16 @@ export async function startSlateRun(projectId: string, blockId: string, body: Sl
   return ((await res.json()) as { jobId: string }).jobId;
 }
 
+export async function startChat(projectId: string, blockId: string, body: { text: string; person: { id: string; name: string } }): Promise<string> {
+  const res = await fetch(`/api/projects/${projectId}/blocks/${blockId}/chat`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw await failure(res, "The question couldn't be sent. Try again.");
+  return ((await res.json()) as { jobId: string }).jobId;
+}
+
 export async function cancelJob(projectId: string, jobId: string): Promise<void> {
   await fetch(`/api/projects/${projectId}/jobs/${jobId}/cancel`, { method: "POST" });
 }

@@ -32,8 +32,9 @@ export function metaProvider(): Provider {
           model,
           instructions: system,
           input,
-          tools: tools.map((t) => ({ type: 'function', name: t.name, description: t.description, parameters: t.parameters })),
-          tool_choice: 'auto',
+          ...(tools.length
+            ? { tools: tools.map((t) => ({ type: 'function', name: t.name, description: t.description, parameters: t.parameters })), tool_choice: 'auto' }
+            : {}),
           reasoning: { effort: env.metaEffort },
           max_output_tokens: 6000,
           stream: false,

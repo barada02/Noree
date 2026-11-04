@@ -125,7 +125,13 @@ export function BoardCanvas({ doc, board, presence, onDragStart, paused, onOpenB
     return result;
   }, [peers]);
 
-  const context = useMemo(() => ({ doc, act, hoverFrameId, peerSelections }), [doc, act, hoverFrameId, peerSelections]);
+  const sourceCounts = useMemo(() => {
+    const result: Record<string, number> = {};
+    for (const edge of edges) result[edge.target] = (result[edge.target] ?? 0) + 1;
+    return result;
+  }, [edges]);
+
+  const context = useMemo(() => ({ doc, act, hoverFrameId, peerSelections, sourceCounts }), [doc, act, hoverFrameId, peerSelections, sourceCounts]);
 
   return (
     <BoardContext.Provider value={context}>

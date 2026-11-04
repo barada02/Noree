@@ -21,7 +21,8 @@ if [ -f "$DIR/.env" ]; then chmod 600 "$DIR/.env"; fi
 chown -R "$APP_USER":"$APP_USER" "$DIR"
 
 # Runs as the app user. Only installs packages when requirements.txt has changed.
-sudo -iu "$APP_USER" bash -euo pipefail -c "
+# Not "sudo -i": it escapes newlines, which joins this script into one broken line.
+sudo -u "$APP_USER" -H bash -euo pipefail -c "
   cd '$DIR'
   python3 --version
   if [ ! -x .venv/bin/python ]; then python3 -m venv .venv; fi

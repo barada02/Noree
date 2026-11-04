@@ -13,6 +13,8 @@ import { WidgetStateProvider } from "./widgetState";
 
 const MAX_PASTE_WIDTH = 640;
 const MAX_TEXT_LENGTH = 4000;
+/** How long after the last change a fresh page snapshot is saved. */
+const SNAPSHOT_IDLE_MS = 3000;
 
 type NewPaste =
   | Omit<Extract<PageItem, { kind: "text" }>, "x" | "y">
@@ -83,7 +85,14 @@ export function SlateFocus({ doc, id, projectId, actor, personName, undo, onClos
     return url;
   }, [doc, page, types, projectId]);
 
-  /** Other blocks read this image as context, so it's kept current when leaving a page. */
+  /** Other blocks read this image as context, so it's kept current during a session too. */
+  useEffect(() => {
+    if (!strokes.length && !pastes.length) return;
+    const timer = setTimeout(() => void saveSnapshot().catch(() => {}), SNAPSHOT_IDLE_MS);
+    return () => clearTimeout(timer);
+  }, [strokes, pastes, objects, saveSnapshot]);
+
+  /** And when leaving a page. */
   const saveSnapshotQuietly = useCallback(() => {
     if (strokes.length || pastes.length) void saveSnapshot().catch(() => {});
   }, [saveSnapshot, strokes.length, pastes.length]);

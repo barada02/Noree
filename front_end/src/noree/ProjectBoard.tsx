@@ -12,6 +12,7 @@ import { usePresence } from "./doc/usePresence";
 import { useProjectDoc } from "./doc/useProjectDoc";
 import { useUndo } from "./doc/useUndo";
 import { useYValue } from "./doc/useY";
+import { AiPanel } from "./shell/AiPanel";
 import { Notice } from "./shell/Notice";
 import { ProjectSidebar } from "./shell/ProjectSidebar";
 import { TopBar } from "./shell/TopBar";
@@ -90,6 +91,8 @@ function Workspace({ doc, provider, status, projectId }: WorkspaceProps) {
   const [focusId, setFocusId] = useState<string | null>(null);
   // The block may be deleted by someone else while it is open.
   const focused = focusId !== null && board.nodes.some((n) => n.id === focusId) ? focusId : null;
+  const selectedKey = board.nodes.filter((n) => n.selected).map((n) => n.id).join(",");
+  const selectedIds = useMemo(() => (selectedKey ? selectedKey.split(",") : []), [selectedKey]);
 
   const add = (type: BlockType) => {
     // New blocks land near the middle of the visible board, offset so they don't stack exactly.
@@ -132,6 +135,7 @@ function Workspace({ doc, provider, status, projectId }: WorkspaceProps) {
           )}
         </main>
       </div>
+      <AiPanel doc={doc} projectId={projectId} selectedIds={selectedIds} actor={actor} personName={presence.name} />
       </div>
       {focused && (
         <SlateFocus doc={doc} id={focused} projectId={projectId} actor={actor} personName={presence.name} undo={undo} onClose={() => setFocusId(null)} />
