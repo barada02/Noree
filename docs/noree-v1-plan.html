@@ -129,8 +129,8 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
   <div class="facts">
     <div class="fact"><b>Thu Nov 5, 7:30 AM IST</b><span>Submission and credit claim deadline</span></div>
     <div class="fact"><b id="countdown">15 hours</b><span>Time left, as of when you opened this</span></div>
-    <div class="fact"><b>M2 live test next</b><span>M0, M1 and local M2 verified</span></div>
-    <div class="fact"><b>Rev 3</b><span>Wed Nov 4, 2026, 17:45 IST</span></div>
+    <div class="fact"><b>M4 next</b><span>M0 to M2 verified, M3 verified locally</span></div>
+    <div class="fact"><b>Rev 4</b><span>Wed Nov 4, 2026, 18:35 IST</span></div>
   </div>
 </header>
 
@@ -144,8 +144,8 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
     <tr><th>Milestone</th><th>Window (IST)</th><th>Result</th><th>State</th></tr>
     <tr><td>M0 Foundation</td><td>17:00 to 18:00</td><td>Code ported, Slate agent answers through Nest, CI green</td><td><span class="pill doing">CI after push</span></td></tr>
     <tr><td>M1 Board</td><td>18:00 to 19:15</td><td>Projects, blocks and frames that survive a refresh</td><td><span class="pill done">done</span></td></tr>
-    <tr><td>M2 Multiplayer</td><td>19:15 to 20:30</td><td>Two browsers in sync <strong>on the live server</strong></td><td><span class="pill doing">live test needs merge</span></td></tr>
-    <tr><td>M3 Slate</td><td>20:30 to 22:30</td><td>Handwriting and AI inside a block, with pages</td><td><span class="pill todo">todo</span></td></tr>
+    <tr><td>M2 Multiplayer</td><td>19:15 to 20:30</td><td>Two browsers in sync <strong>on the live server</strong></td><td><span class="pill done">done, 2 checks open</span></td></tr>
+    <tr><td>M3 Slate</td><td>20:30 to 22:30</td><td>Handwriting and AI inside a block, with pages</td><td><span class="pill doing">live test next</span></td></tr>
     <tr><td>M4 Connections, chat</td><td>22:30 to 23:45</td><td>A line gives a block's chat real context</td><td><span class="pill todo">todo</span></td></tr>
     <tr><td>M5 3D block</td><td>23:45 to 01:00</td><td>Slate connected to 3D, Generate works live</td><td><span class="pill todo">todo</span></td></tr>
     <tr><td>M6 Read, export</td><td>01:00 to 01:30</td><td>Read view and Markdown export</td><td><span class="pill todo">todo</span></td></tr>
@@ -217,6 +217,7 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
     <tr><td>Uploads</td><td>Images and JS</td><td>Images only. Only the server writes JS</td><td>Otherwise anyone on a link could plant code that others run.</td></tr>
     <tr><td>Undo AI</td><td>Grouped undo per job</td><td>Remove all objects with that <code>runId</code></td><td>Objects already carry <code>runId</code>. Simpler, and any person can do it.</td></tr>
     <tr><td>Text block</td><td>Not specified</td><td>Plain text on <code>Y.Text</code></td><td>Small and reliable. A BlockNote doc block comes after V1.</td></tr>
+    <tr><td>Pasted items and the agent</td><td>Not specified</td><td>Each paste counts as ink through an outline stroke, and the snapshot shows what it really is</td><td>The agent can point at a paste and never places anything on top of it, with no change to the agent.</td></tr>
     <tr><td>Frame growth</td><td>Grows as a block moves</td><td>Grows when a block is dropped</td><td>Growing during a drag would make it impossible to drag a block out.</td></tr>
     <tr><td>Project rename</td><td><code>PATCH /projects/:id</code></td><td>Written to the document, and the server copies it to <code>projects.json</code> on save</td><td>Syncs to everyone like any other edit, with no extra endpoint.</td></tr>
   </table></div>
@@ -653,7 +654,7 @@ generate-3d -> brief step, then agent-sandbox</code></pre>
     <tr><td><code>MODAL_TOKEN_ID</code>, <code>MODAL_TOKEN_SECRET</code></td><td>Sandbox, on the server</td><td>Replaces the laptop's <code>~/.modal.toml</code></td></tr>
     <tr><td><code>SANDBOX_URL</code></td><td>Nest</td><td>Default <code>http://127.0.0.1:8000</code></td></tr>
     <tr><td><code>DATA_DIR</code></td><td>Nest</td><td>Default <code>./data</code></td></tr>
-    <tr><td><code>PROJECTS_MAX_PER_HOUR</code></td><td>Nest</td><td>Default 200</td></tr>
+    <tr><td><code>PROJECTS_MAX_PER_HOUR</code>, <code>ASSETS_MAX_PER_HOUR</code></td><td>Nest</td><td>Defaults 200 and 1000</td></tr>
     <tr><td><code>AI_ENABLED</code>, <code>AI_MAX_RUNS_PER_HOUR</code>, <code>GEN3D_MAX_RUNS_PER_HOUR</code></td><td>Nest</td><td>Kill switch and spend limits</td></tr>
   </table></div>
   <h3>Local development</h3>
@@ -727,25 +728,26 @@ node scripts/sync-shared.mjs --watch # while editing shared/
       <li><input type="checkbox" disabled checked> Per-person undo, share link button</li>
       <li><input type="checkbox" disabled checked> Server-side document write, proven by a test</li>
       <li><input type="checkbox" disabled checked> Shutdown flush and stale job handling (G6)</li>
-      <li><input type="checkbox" disabled> <strong>Merge to <code>main</code> and test on the live site</strong>, including the camera pages</li>
+      <li><input type="checkbox" disabled checked> <strong>Merge to <code>main</code> and test on the live site</strong>, including the camera pages</li>
     </ul>
     <p class="dw"><strong>Done when:</strong> two browsers stay in sync on <code>kanya.alito.tech</code>, a redeploy loses nothing, and a server script can add a block that appears live.</p>
-    <p class="dw"><strong>Verified locally Nov 4, 17:40:</strong> two browsers through the dev proxy (three runs in a row), plus 29 backend tests covering server restart, offline merge, rejected names, agent writes, and camera sockets beside <code>/collab</code>. <strong>Still open:</strong> the same on the live site, which needs a merge to <code>main</code>. Server memory check (G7) moved here from M0.</p>
+    <p class="dw"><strong>Verified locally Nov 4, 17:40:</strong> two browsers through the dev proxy (three runs in a row), plus 29 backend tests covering server restart, offline merge, rejected names, agent writes, and camera sockets beside <code>/collab</code>. <strong>Verified live Nov 4, 18:20:</strong> two browsers synced on <code>kanya.alito.tech</code> through nginx and HTTPS, and a fresh browser loaded from the server. The camera page still shows its QR code, with no phone paired. <strong>Still open:</strong> confirming a redeploy loses nothing, at the next deploy, and the server memory check (G7), moved here from M0.</p>
     <p class="gate"><strong>Gate at 20:30:</strong> if sync isn't reliable, keep the local Y.Doc, carry on, and come back after M5. The rest of the code doesn't depend on the network.</p>
   </div>
 
   <div class="milestone">
     <h3>M3 Slate <span class="when">20:30 to 22:30</span></h3>
     <ul>
-      <li><input type="checkbox" disabled> Slate block with board preview and focus mode</li>
-      <li><input type="checkbox" disabled> Pages: add, previous, next</li>
-      <li><input type="checkbox" disabled> Strokes, AI objects and widget values in Yjs</li>
-      <li><input type="checkbox" disabled> Pen, eraser, undo, Undo AI</li>
-      <li><input type="checkbox" disabled> Paste text and images onto a page</li>
-      <li><input type="checkbox" disabled> <code>jobs</code> module, <code>slate-run</code> endpoint, event-to-document adapter</li>
-      <li><input type="checkbox" disabled> Snapshots saved as assets, trace in the panel</li>
+      <li><input type="checkbox" disabled checked> Slate block with board preview and focus mode</li>
+      <li><input type="checkbox" disabled checked> Pages: add, previous, next</li>
+      <li><input type="checkbox" disabled checked> Strokes, AI objects and widget values in Yjs</li>
+      <li><input type="checkbox" disabled checked> Pen, eraser, undo, Undo AI</li>
+      <li><input type="checkbox" disabled checked> Paste text and images onto a page</li>
+      <li><input type="checkbox" disabled checked> <code>jobs</code> module, <code>slate-run</code> endpoint, event-to-document adapter</li>
+      <li><input type="checkbox" disabled checked> Snapshots saved as assets, trace in the panel</li>
     </ul>
     <p class="dw"><strong>Done when:</strong> writing <code>z = a + ib</code> gives the outline, arrow and Argand plane as it does today, and a second browser sees it all with sliders in sync.</p>
+    <p class="dw"><strong>Verified locally Nov 4, 18:30:</strong> drawn with the mouse in Edge, one real Muse Spark Open run in 61 s, and a second browser saw the ink, AI result and slider changes live. <strong>Still open:</strong> the same on the live site, which needs the API keys on the server.</p>
     <p class="gate"><strong>Gate at 22:30:</strong> Slate is the core of the demo, so it may take time from M6. It may not take time from M5.</p>
   </div>
 

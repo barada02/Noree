@@ -2,6 +2,7 @@ import type { ComponentType, ReactNode } from "react";
 import * as Y from "yjs";
 import { docParts, type BlockType } from "../../shared/schema.js";
 import { YTextArea } from "../doc/YTextArea";
+import { SlatePreview } from "./slate/SlatePreview";
 
 export type BlockProps = { doc: Y.Doc; id: string };
 
@@ -10,6 +11,8 @@ export type BlockDefinition = {
   label: string;
   icon: ReactNode;
   Preview: ComponentType<BlockProps>;
+  /** Opens full screen on double-click. */
+  hasFocus?: boolean;
 };
 
 function TextContent({ doc, id, placeholder, className }: BlockProps & { placeholder: string; className: string }) {
@@ -46,7 +49,8 @@ export const BLOCKS: BlockDefinition[] = [
     type: "slate",
     label: "Slate",
     icon: icon(<path d="M4 20c3-1 4-5 7-9s5-6 7-5-1 5-3 8-3 5-1 5 3-1 6-3" />),
-    Preview: () => <Placeholder label="Slate" />,
+    Preview: SlatePreview,
+    hasFocus: true,
   },
   {
     type: "text",

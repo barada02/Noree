@@ -30,6 +30,9 @@ export default function Landing() {
           Noree
         </a>
         <nav className="flex items-center gap-5 font-mono text-xs tracking-widest uppercase">
+          <a href="#/app" className="font-semibold hover:underline">
+            Open app
+          </a>
           <a href="#/yjs" className="hover:underline">
             Yjs
           </a>
