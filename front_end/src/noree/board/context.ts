@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 import * as Y from "yjs";
-import type { ActorRef } from "../../shared/schema.js";
+import type { ActorRef, BlockType } from "../../shared/schema.js";
 
 export type BoardContextValue = {
   doc: Y.Doc;
@@ -14,6 +14,7 @@ export type BoardContextValue = {
   peerSelections: Record<string, string>;
   /** How many blocks each block reads from. */
   sourceCounts: Record<string, number>;
+  onOpenBlock?: (id: string, type: BlockType) => void;
 };
 
 export const BoardContext = createContext<BoardContextValue | null>(null);

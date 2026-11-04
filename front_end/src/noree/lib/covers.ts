@@ -15,6 +15,15 @@ export function coverFor(id: string): string {
   return COVERS[Math.abs(hash) % COVERS.length];
 }
 
+const TINTS = ["#26503c", "#3f8a5c", "#2a4a57", "#6b7f23", "#7b5ea7", "#a34a5f", "#4a3f12"];
+
+/** A board's colour, chosen from its id like its cover, for monogram tiles. */
+export function tintFor(id: string): string {
+  let hash = 0;
+  for (const ch of id) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
+  return TINTS[Math.abs(hash) % TINTS.length];
+}
+
 export function relativeTime(timestamp: number, now = Date.now()): string {
   const minutes = Math.round((now - timestamp) / 60_000);
   if (minutes < 1) return "just now";

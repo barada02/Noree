@@ -30,7 +30,7 @@ function SlatePage({ page, label }: { page: Y.Map<unknown>; label: string | null
   );
 }
 
-function ReadBlock({ doc, block }: { doc: Y.Doc; block: BlockLayout }) {
+function ReadBlock({ doc, block, onLocate }: { doc: Y.Doc; block: BlockLayout; onLocate?: (id: string) => void }) {
   const content = docParts(doc).content.get(block.id);
   const text = useYValue([(content ?? new Y.Map()) as never], () => String(content?.get("text") ?? ""));
   const model = useYValue([(content ?? new Y.Map()) as never], () => {
@@ -70,26 +70,33 @@ function ReadBlock({ doc, block }: { doc: Y.Doc; block: BlockLayout }) {
   }
   return (
     <article data-read-block={block.title}>
-      <h3 className="mb-2 text-[17px] font-semibold">{block.title}</h3>
+      <h3 className="mb-2 flex items-center gap-3 text-[17px] font-semibold">
+        <span className="min-w-0 flex-1 truncate">{block.title}</span>
+        {onLocate && (
+          <button type="button" onClick={() => onLocate(block.id)} className="n-btn n-btn--outline n-btn--sm shrink-0">
+            Show on board
+          </button>
+        )}
+      </h3>
       {body}
     </article>
   );
 }
 
-function Section({ doc, section }: { doc: Y.Doc; section: OutlineSection }) {
+function Section({ doc, section, onLocate }: { doc: Y.Doc; section: OutlineSection; onLocate?: (id: string) => void }) {
   return (
-    <section data-read-section={section.frame?.title ?? ""} className="space-y-6">
+    <section id={`read-${section.frame?.id ?? "loose"}`} data-read-section={section.frame?.title ?? ""} className="scroll-mt-6 space-y-6">
       {section.frame && <h2 className="border-b border-n-line-soft pb-1 n-display text-[27px]">{section.frame.title}</h2>}
       {section.frame && !section.blocks.length && <p className="text-sm text-n-ink-3 italic">This frame is empty.</p>}
       {section.blocks.map((block) => (
-        <ReadBlock key={block.id} doc={doc} block={block} />
+        <ReadBlock key={block.id} doc={doc} block={block} onLocate={onLocate} />
       ))}
     </section>
   );
 }
 
 /** The board as a document: frames in order, then blocks by position. Live, like the board. */
-export function ReadView({ doc }: { doc: Y.Doc }) {
+export function ReadView({ doc, onLocate }: { doc: Y.Doc; onLocate?: (id: string) => void }) {
   const parts = useMemo(() => docParts(doc), [doc]);
   const sections = useYValue([parts.blocks as never, parts.order as never], () => boardOutline(doc));
   const title = useYValue([parts.meta as never], () => String(parts.meta.get("title") ?? ""));
@@ -97,9 +104,18 @@ export function ReadView({ doc }: { doc: Y.Doc }) {
     <div data-read-view className="absolute inset-0 z-10 overflow-y-auto bg-n-bg">
       <div className="mx-auto max-w-3xl space-y-10 px-6 py-10">
         <h1 className="n-display text-[42px] leading-tight">{title}</h1>
+        {sections.length > 1 && (
+          <nav aria-label="On this board" className="flex flex-wrap gap-2">
+            {sections.map((section) => (
+              <button key={section.frame?.id ?? "loose"} type="button" onClick={() => document.getElementById(`read-${section.frame?.id ?? "loose"}`)?.scrollIntoView({ behavior: "smooth", block: "start" })} className="rounded-full border border-n-line bg-n-surface px-3.5 py-2 text-[13px] font-medium text-n-ink-2 hover:border-n-leaf hover:text-n-moss">
+                {section.frame?.title ?? "Loose blocks"}
+              </button>
+            ))}
+          </nav>
+        )}
         {sections.length === 0 && <p className="text-n-ink-3">This board is empty. Switch to Board and add a block.</p>}
         {sections.map((section) => (
-          <Section key={section.frame?.id ?? "loose"} doc={doc} section={section} />
+          <Section key={section.frame?.id ?? "loose"} doc={doc} section={section} onLocate={onLocate} />
         ))}
       </div>
     </div>

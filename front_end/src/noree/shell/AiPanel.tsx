@@ -6,7 +6,7 @@ import { isStale, useBlockJobs, useThreadJobs, type JobView } from "../doc/useJo
 import { useYValue } from "../doc/useY";
 import { cancelJob, startAgent, undoAgentRun } from "../lib/api";
 import { renderRich } from "../lib/rich";
-import { SendIcon, SparkIcon } from "../ui/icons";
+import { CloseIcon, SendIcon, SparkIcon } from "../ui/icons";
 import { Mark } from "../ui/Mark";
 
 type Props = {
@@ -16,6 +16,7 @@ type Props = {
   selectedIds: string[];
   actor: ActorRef;
   personName: string;
+  onClose?: () => void;
 };
 
 const BOARD_THREAD = "board";
@@ -278,7 +279,7 @@ function Chat({ doc, projectId, threadId, focusBlockId, actor, personName }: { d
               Stop
             </button>
           )}
-          <button type="submit" aria-label="Ask" title="Send (Enter)" disabled={!draft.trim() || sending || running || busyElsewhere} className="n-btn n-btn--primary n-btn--icon shrink-0">
+          <button type="submit" aria-label="Ask" title={busyElsewhere ? "Wait for the current AI run to finish" : running ? "The AI is working — Stop it or wait" : !draft.trim() ? "Type a message first" : "Send (Enter)"} disabled={!draft.trim() || sending || running || busyElsewhere} className="n-btn n-btn--primary n-btn--icon shrink-0">
             <SendIcon />
           </button>
         </div>
@@ -295,7 +296,7 @@ export function AiPanel(props: Props) {
   return <PanelContent key={only ?? BOARD_THREAD} only={only} {...props} />;
 }
 
-function PanelContent({ doc, projectId, actor, personName, only }: Props & { only: string | null }) {
+function PanelContent({ doc, projectId, actor, personName, only, onClose }: Props & { only: string | null }) {
   const parts = useMemo(() => docParts(doc), [doc]);
   const selected = useYValue([parts.blocks as never], () => {
     const found = only ? parts.blocks.get(only) : undefined;
@@ -303,7 +304,9 @@ function PanelContent({ doc, projectId, actor, personName, only }: Props & { onl
   });
 
   return (
-    <aside aria-label="AI panel" className="absolute top-14 right-0 bottom-0 z-20 flex w-[22rem] max-w-full shrink-0 flex-col border-l border-n-line-soft bg-n-surface shadow-[var(--n-shadow-2)] lg:static lg:shadow-none">
+    <>
+      {onClose && <button type="button" aria-label="Close AI panel" onClick={onClose} className="absolute inset-0 top-14 z-10 cursor-default bg-black/25 lg:hidden" />}
+      <aside aria-label="AI panel" className="absolute top-14 right-0 bottom-0 z-20 flex w-[22rem] max-w-full shrink-0 flex-col border-l border-n-line-soft bg-n-surface shadow-[var(--n-shadow-2)] lg:static lg:shadow-none">
       <div className="flex items-center gap-2.5 border-b border-n-line-soft px-4 py-3">
         <span className="grid h-8 w-8 place-items-center rounded-xl bg-n-leaf-soft text-n-moss">
           <SparkIcon className="h-[18px] w-[18px]" />
@@ -312,9 +315,16 @@ function PanelContent({ doc, projectId, actor, personName, only }: Props & { onl
           <h2 className="truncate text-[15px] leading-tight font-semibold">{selected ? selected.title : "AI"}</h2>
           <p className="text-xs text-n-ink-3">{selected ? "Starting from this block" : "Working with the whole board"}</p>
         </div>
+        {onClose && (
+          <button type="button" onClick={onClose} aria-label="Close AI panel" title="Close AI panel" className="n-btn n-btn--ghost n-btn--icon n-btn--sm ml-auto shrink-0">
+            <CloseIcon />
+          </button>
+        )}
+        {null}
       </div>
       {/* The key gives each conversation its own draft and scroll position. */}
       <Chat key={selected?.id ?? BOARD_THREAD} doc={doc} projectId={projectId} threadId={selected?.id ?? BOARD_THREAD} focusBlockId={selected?.id ?? null} actor={actor} personName={personName} />
     </aside>
+    </>
   );
 }

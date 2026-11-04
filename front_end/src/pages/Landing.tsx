@@ -55,7 +55,7 @@ function scrollTo(id: string) {
 export default function Landing() {
   return (
     <div className="noree-site">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
+      <header className="flex w-full items-center justify-between px-5 py-5 sm:px-10">
         <a
           href="#/"
           aria-label={`${BRAND.name} home`}
@@ -86,8 +86,8 @@ export default function Landing() {
       </header>
 
       <main>
-        <section className="mx-auto max-w-6xl px-3 sm:px-8">
-          <div className="relative isolate overflow-hidden rounded-[28px] border border-n-line-soft sm:rounded-[36px]">
+        <section>
+          <div className="relative isolate flex min-h-[540px] items-center overflow-hidden sm:min-h-[620px]">
             <img
               src={heroImage}
               alt=""
@@ -101,11 +101,11 @@ export default function Landing() {
               }}
             />
             <div className="absolute inset-0 -z-10 bg-n-bg/70 sm:hidden" />
-            <div className="n-rise max-w-2xl px-6 py-14 sm:px-12 sm:py-24">
+            <div className="n-rise mx-auto w-full max-w-6xl px-5 py-14 sm:px-8 sm:py-24">
               <p className="n-hand text-[28px] leading-none text-n-moss">
                 {BRAND.tagline}
               </p>
-              <h1 className="n-display mt-3 text-[44px] leading-[1.04] sm:text-[64px]">
+              <h1 className="n-display mt-3 max-w-2xl text-[44px] leading-[1.04] sm:text-[64px]">
                 A calm place to plan, draw and build with AI.
               </h1>
               <p className="mt-5 max-w-lg text-[17px] leading-8 text-n-ink-2">
@@ -133,18 +133,18 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-3 pt-10 sm:px-8 sm:pt-14">
-          <figure className="n-panel overflow-hidden p-2 shadow-[var(--n-shadow-2)] sm:p-3">
-            <div className="overflow-x-auto rounded-[14px]">
+        <section>
+          <figure className="border-y border-n-line-soft bg-n-surface">
+            <div className="overflow-hidden">
               <img
                 src={shotBoard}
                 alt="A board with three frames, Build, Launch and Feedback, each holding a checklist and a yellow risk note"
                 width={1600}
                 height={310}
-                className="w-full min-w-[720px]"
+                className="h-auto w-full"
               />
             </div>
-            <figcaption className="px-3 pt-3 pb-1 text-[13px] text-n-ink-3">
+            <figcaption className="mx-auto w-full max-w-6xl px-5 pt-3 pb-4 text-[13px] text-n-ink-3 sm:px-8">
               A board the AI laid out from one sentence: three frames, each with
               a checklist and its biggest risk.
             </figcaption>
@@ -177,8 +177,8 @@ export default function Landing() {
           </ol>
         </section>
 
-        <section className="mx-auto max-w-6xl px-5 pt-20 sm:px-8 sm:pt-28">
-          <div className="grid items-center gap-10 md:grid-cols-[1fr_340px] lg:grid-cols-[1fr_380px]">
+        <section className="mt-20 border-y border-n-line-soft bg-n-surface py-20 sm:mt-28 sm:py-24">
+          <div className="mx-auto grid w-full max-w-6xl items-center gap-10 px-5 sm:px-8 md:grid-cols-[1fr_340px] lg:grid-cols-[1fr_380px]">
             <div>
               <p className="n-eyebrow">The AI, in the open</p>
               <h2 className="n-display mt-2 text-[34px] leading-[1.1] sm:text-[44px]">
@@ -214,15 +214,15 @@ export default function Landing() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-3 pt-20 sm:px-8 sm:pt-28">
-          <div className="relative isolate overflow-hidden rounded-[28px] border border-n-line-soft sm:rounded-[36px]">
+        <section className="pt-20 sm:pt-28">
+          <div className="relative isolate overflow-hidden">
             <img
               src={shadowsImage}
               alt=""
               className="absolute inset-0 -z-20 h-full w-full object-cover dark:brightness-[0.45]"
             />
             <div className="absolute inset-0 -z-10 bg-n-bg/55 dark:bg-n-bg/35" />
-            <div className="px-6 py-16 text-center sm:px-12 sm:py-24">
+            <div className="mx-auto w-full max-w-6xl px-5 py-16 text-center sm:px-8 sm:py-24">
               <h2 className="n-display mx-auto max-w-2xl text-[34px] leading-[1.1] sm:text-[46px]">
                 Start with one sentence.
               </h2>
@@ -241,9 +241,9 @@ export default function Landing() {
 
       <footer
         id="lab"
-        className="mx-auto mt-20 max-w-6xl scroll-mt-6 border-t border-n-line-soft px-5 pt-8 pb-12 sm:px-8"
+        className="mt-20 w-full scroll-mt-6 border-t border-n-line-soft pt-8 pb-12"
       >
-        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 sm:px-8 md:flex-row md:items-start md:justify-between">
           <div>
             <a href="#/" className="flex items-center gap-2.5">
               <Mark tile size={26} />

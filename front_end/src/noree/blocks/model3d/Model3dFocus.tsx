@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as Y from "yjs";
 import { docParts, readLayout, type ActorRef } from "../../../shared/schema.js";
 import { cancelJob } from "../../lib/api";
@@ -6,6 +6,7 @@ import { JobTrace } from "../slate/JobTrace";
 import { ModelViewer } from "./ModelViewer";
 import { PromptInput, StatusBadge } from "./Model3dPreview";
 import { useModel3d } from "./useModel3d";
+import { useDialogFocus } from "../../shell/useDialogFocus";
 
 type Props = { doc: Y.Doc; id: string; projectId: string; actor: ActorRef; personName: string; onClose: () => void };
 
@@ -13,6 +14,8 @@ const BUTTON = "n-btn n-btn--outline n-btn--sm";
 
 /** Full screen, with the one live 3D view at a time. */
 export function Model3dFocus({ doc, id, projectId, actor, personName, onClose }: Props) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef);
   const model = useModel3d({ doc, id, projectId, actor, personName });
   const { current, versions, index, running, job, now } = model;
 
@@ -30,7 +33,7 @@ export function Model3dFocus({ doc, id, projectId, actor, personName, onClose }:
   }, [onClose]);
 
   return (
-    <div role="dialog" aria-label={`${title}, focus mode`} className="fixed inset-0 z-50 flex flex-col bg-n-bg text-n-ink">
+    <div ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`${title}, focus mode`} className="fixed inset-0 z-50 flex flex-col bg-n-bg text-n-ink outline-none">
       <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-n-line-soft bg-n-surface/90 px-4 py-2.5 backdrop-blur">
         <span className="n-display mr-2 max-w-56 truncate text-[19px]">{title}</span>
         {versions.length > 0 && (
@@ -59,7 +62,7 @@ export function Model3dFocus({ doc, id, projectId, actor, personName, onClose }:
               Stop
             </button>
           ) : (
-            <button type="button" disabled={!model.canGenerate} onClick={() => void model.generate()} className="n-btn n-btn--primary n-btn--sm">
+            <button type="button" disabled={!model.canGenerate} title={!model.canGenerate ? "Add a prompt, or connect another block first" : undefined} onClick={() => void model.generate()} className="n-btn n-btn--primary n-btn--sm">
               {model.starting ? "Starting" : current ? "Regenerate" : "Generate"}
             </button>
           )}
@@ -73,7 +76,7 @@ export function Model3dFocus({ doc, id, projectId, actor, personName, onClose }:
           {model.error}
         </p>
       )}
-      <div className="flex min-h-0 flex-1 gap-3 p-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 p-3 md:flex-row">
         <main className="relative min-w-0 flex-1 overflow-hidden rounded-2xl border border-n-line-soft bg-stone-950">
           {current ? (
             <ModelViewer codeAsset={current.codeAsset} />

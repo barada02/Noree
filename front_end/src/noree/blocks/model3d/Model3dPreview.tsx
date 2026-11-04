@@ -79,6 +79,7 @@ export function Model3dPreview({ doc, id }: { doc: Y.Doc; id: string }) {
           </p>
         )}
       </div>
+      {!model.canGenerate && !running && <p className="shrink-0 px-2 pt-1.5 text-[11.5px] text-n-ink-3">Add a prompt below, or draw a line from another block into this one.</p>}
       <div className="nodrag flex shrink-0 items-center gap-1.5 p-1.5" onDoubleClick={(e) => e.stopPropagation()}>
         <PromptInput
           value={model.prompt}
@@ -88,6 +89,7 @@ export function Model3dPreview({ doc, id }: { doc: Y.Doc; id: string }) {
         <button
           type="button"
           disabled={!model.canGenerate}
+          title={!model.canGenerate && !running ? "Add a prompt, or connect another block first" : undefined}
           onClick={() => void model.generate()}
           className="n-btn n-btn--primary n-btn--sm shrink-0"
         >

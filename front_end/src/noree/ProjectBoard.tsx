@@ -59,6 +59,33 @@ function EmptyBoard({ onAsk, onAddSlate }: { onAsk: () => void; onAddSlate: () =
   );
 }
 
+function BoardHint() {
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      return localStorage.getItem("noree-board-hint") === "dismissed";
+    } catch {
+      return false;
+    }
+  });
+  if (dismissed) return null;
+  const dismiss = () => {
+    setDismissed(true);
+    try {
+      localStorage.setItem("noree-board-hint", "dismissed");
+    } catch {
+      // Private windows can refuse storage; dismissing for this board is enough.
+    }
+  };
+  return (
+    <div className="n-float absolute top-3 left-1/2 z-[4] flex w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-3 rounded-full py-1.5 pr-1.5 pl-4">
+      <p className="truncate text-[12.5px] text-n-ink-2">Double-click a block to open it · Drag between the dots to connect blocks</p>
+      <button type="button" onClick={dismiss} className="n-btn n-btn--primary n-btn--sm shrink-0">
+        Got it
+      </button>
+    </div>
+  );
+}
+
 function FrameList({ doc, act }: { doc: Y.Doc; act: (action: unknown) => unknown }) {
   const flow = useReactFlow<BoardNode>();
   const parts = useMemo(() => docParts(doc), [doc]);
@@ -84,11 +111,11 @@ function FrameList({ doc, act }: { doc: Y.Doc; act: (action: unknown) => unknown
             <FrameIcon className="h-3.5 w-3.5 shrink-0 text-n-leaf" />
             <span className="truncate">{f.title}</span>
           </button>
-          <span className="flex opacity-0 group-focus-within:opacity-100 group-hover:opacity-100">
-            <button type="button" aria-label={`Move ${f.title} up`} disabled={i === 0} onClick={() => move(f.id, i - 1)} className="px-1 text-n-ink-3 hover:text-n-ink disabled:opacity-30">
+          <span className="flex opacity-70 group-focus-within:opacity-100 group-hover:opacity-100 lg:opacity-0">
+            <button type="button" aria-label={`Move ${f.title} up`} disabled={i === 0} onClick={() => move(f.id, i - 1)} className="px-2 py-2 text-n-ink-3 hover:text-n-ink disabled:opacity-30">
               <ChevronIcon className="h-3.5 w-3.5 -rotate-90" />
             </button>
-            <button type="button" aria-label={`Move ${f.title} down`} disabled={i === frames.length - 1} onClick={() => move(f.id, i + 1)} className="px-1 text-n-ink-3 hover:text-n-ink disabled:opacity-30">
+            <button type="button" aria-label={`Move ${f.title} down`} disabled={i === frames.length - 1} onClick={() => move(f.id, i + 1)} className="px-2 py-2 text-n-ink-3 hover:text-n-ink disabled:opacity-30">
               <ChevronIcon className="h-3.5 w-3.5 rotate-90" />
             </button>
           </span>
@@ -162,12 +189,13 @@ function Workspace({ doc, provider, status, projectId }: WorkspaceProps) {
                 if (BLOCK_BY_TYPE[type].hasFocus) setFocusId(id);
               }}
             />
+            {mode === "board" && !empty && <BoardHint />}
             {mode === "board" && <Dock onAdd={add} />}
-            {mode === "read" && <ReadView doc={doc} />}
+            {mode === "read" && <ReadView doc={doc} onLocate={(id) => { setMode("board"); setTimeout(() => void flow.fitView({ nodes: [{ id }], duration: 400, padding: 0.2, maxZoom: 1 }), 60); }} />}
             {empty && mode === "board" && <EmptyBoard onAsk={askTheAi} onAddSlate={() => add("slate")} />}
           </main>
         </div>
-        {mode === "board" && panelOpen && <AiPanel doc={doc} projectId={projectId} selectedIds={selectedIds} actor={actor} personName={presence.name} />}
+        {mode === "board" && panelOpen && <AiPanel doc={doc} projectId={projectId} selectedIds={selectedIds} actor={actor} personName={presence.name} onClose={() => setPanelOpen(false)} />}
       </div>
       {focused && focusedNode?.data.blockType === "slate" && (
         <SlateFocus doc={doc} id={focused} projectId={projectId} actor={actor} personName={presence.name} undo={undo} onClose={() => setFocusId(null)} />
