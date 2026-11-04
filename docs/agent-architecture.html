@@ -339,7 +339,7 @@ POST /projects/:id/jobs/:jobId/cancel         -> abort signal</code></pre>
   <h3>Inside the service</h3>
   <div class="tbl"><table>
     <tr><th>Stage</th><th>What happens</th><th>On failure</th></tr>
-    <tr><td><strong>Coding agent</strong></td><td>One model call returns one ES module that exports <code>create(container, context)</code> and may only import from <code>three</code>. It has no tools</td><td>A raised error fails the whole run</td></tr>
+    <tr><td><strong>Coding agent</strong></td><td>Despite the name, a single model call per attempt, not an agent loop. It returns one ES module that exports <code>create(container, context)</code> and may only import from <code>three</code>. It has no tools. A retry sends the brief plus the failure notes, but <strong>not the previous code</strong>, so each attempt rewrites from scratch</td><td>A raised error fails the whole run</td></tr>
     <tr><td><strong>Modal test</strong></td><td>A Modal sandbox runs the code in headless Chromium with software WebGL for 3.5 seconds, collects console errors, takes a screenshot and checks it isn't blank. The sandbox is always terminated</td><td>Errors go back as feedback, and review is skipped for that attempt</td></tr>
     <tr><td><strong>Vision review</strong></td><td>A vision model reads the brief and the screenshot, and replies PASS or FAIL with notes</td><td>Notes go back as feedback. <strong>If the vision call itself errors or returns nothing, the attempt is accepted on the sandbox test alone</strong></td></tr>
     <tr><td><strong>After 3 attempts</strong></td><td>The last code is saved as a <code>draft</code></td><td>The block shows it with a Draft badge, and the review note goes in the thread</td></tr>
@@ -432,6 +432,7 @@ POST /projects/:id/jobs/:jobId/cancel         -> abort signal</code></pre>
     <tr><td><strong>No project-level cost limit</strong></td><td>Hourly counters across the server only, with no token budget</td><td>Longer autonomous runs need budgets</td></tr>
     <tr><td><strong>Everything needs a person to start it</strong></td><td>No background or scheduled runs</td><td>Autonomous agents would need approval rules</td></tr>
     <tr><td><strong>Slate prompt-injection hardening</strong></td><td>Its prompt doesn't say that page content is only information, and pasted text reaches it</td><td>Worth adding. Damage is limited, since its tools can only annotate that page</td></tr>
+    <tr><td><strong>The 3D coding agent can't iterate</strong></td><td>One call per attempt, no tools, and retries don't see the previous code</td><td>A good model with one small flaw gets thrown away and rewritten, which can fix one thing and break another</td></tr>
     <tr><td><strong>Reviewer can pass on failure</strong></td><td>If the review call errors, the attempt is accepted on the sandbox test alone</td><td>Approved may mean "rendered" rather than "reviewed" when the vision call is down</td></tr>
     <tr><td><strong>Cancel isn't authorized</strong></td><td>Anyone with a job id can stop that job. Ids are random and visible to people on that board</td><td>Fine for links with no accounts. Revisit with accounts</td></tr>
   </table></div>
