@@ -52,6 +52,14 @@ else
   echo "nginx upload limit rejected; removed" >&2
 fi
 
+# The 3D service. Runs before pm2, so its app is included on this deploy. A failure here only warns:
+# the main app must still deploy.
+{
+  aws s3 cp "$SRC/sandbox.tgz" "$TMP/sandbox.tgz" --only-show-errors &&
+    aws s3 cp "$SRC/setup-sandbox.sh" "$TMP/setup-sandbox.sh" --only-show-errors &&
+    bash "$TMP/setup-sandbox.sh" "$TMP/sandbox.tgz" "$APP_USER"
+} || echo "WARNING: 3D service setup failed. The main app will still deploy." >&2
+
 sudo -iu "$APP_USER" bash -c "cd $API_DIR && npm ci --omit=dev && pm2 startOrReload ecosystem.config.cjs --update-env && pm2 save"
 
 # Health check against the app itself (and its Socket.IO endpoint). Not via nginx on :80:
@@ -59,7 +67,14 @@ sudo -iu "$APP_USER" bash -c "cd $API_DIR && npm ci --omit=dev && pm2 startOrRel
 for i in 1 2 3 4 5 6 7 8; do
   if curl -fsS http://127.0.0.1:3000/ >/dev/null \
     && curl -fsS "http://127.0.0.1:3000/socket.io/?EIO=4&transport=polling" >/dev/null; then
-    echo "API healthy"; rm -rf "$TMP"; exit 0
+    echo "API healthy"
+    # The 3D service gets a moment to start. Reported only, for the same reason as above.
+    for j in 1 2 3 4 5 6; do
+      if curl -fsS -m 3 http://127.0.0.1:8000/health >/dev/null 2>&1; then echo "3D service healthy"; break; fi
+      if [ "$j" = 6 ]; then echo "WARNING: 3D service is not responding on :8000. Check: pm2 logs noree-sandbox" >&2; fi
+      sleep 3
+    done
+    rm -rf "$TMP"; exit 0
   fi
   sleep 3
 done

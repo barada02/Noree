@@ -47,7 +47,8 @@ jobs:
           mkdir release
           tar -czf release/backend.tgz -C back_end dist package.json package-lock.json ecosystem.config.cjs
           tar -czf release/frontend.tgz -C front_end/dist .
-          cp deploy/remote-deploy.sh release/
+          tar -czf release/sandbox.tgz --exclude=.gitignore -C services/agent-sandbox . -C ../../deploy run-sandbox.sh
+          cp deploy/remote-deploy.sh deploy/setup-sandbox.sh release/
 
       - uses: actions/upload-artifact@v4
         if: github.event_name != 'pull_request'
@@ -86,8 +87,16 @@ jobs:
             --parameters 'commands=["aws s3 cp s3://${{ secrets.S3_BUCKET }}/releases/${{ github.sha }}/remote-deploy.sh /tmp/remote-deploy.sh --only-show-errors","bash /tmp/remote-deploy.sh ${{ secrets.S3_BUCKET }} ${{ github.sha }} ubuntu"]' \
             --query Command.CommandId --output text)
 
-          STATUS=0
-          aws ssm wait command-executed --command-id "$CMD_ID" --instance-id "${{ secrets.INSTANCE_ID }}" || STATUS=$?
+          # Polled by hand: "aws ssm wait" gives up after about 100 seconds, and installing Python packages takes longer.
+          STATUS=1
+          for attempt in $(seq 1 120); do
+            STATE=$(aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "${{ secrets.INSTANCE_ID }}" --query Status --output text 2>/dev/null || echo Pending)
+            case "$STATE" in
+              Success) STATUS=0; break ;;
+              Failed|Cancelled|TimedOut) break ;;
+            esac
+            sleep 5
+          done
 
           aws ssm get-command-invocation --command-id "$CMD_ID" --instance-id "${{ secrets.INSTANCE_ID }}" \
             --query '{Status:Status,Out:StandardOutputContent,Err:StandardErrorContent}' --output yaml
