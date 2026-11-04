@@ -43,15 +43,17 @@ function EditableTitle({ id, title, className }: { id: string; title: string; cl
 const HANDLE = "!h-2.5 !w-2.5 !border-2 !border-white !bg-stone-500 dark:!border-stone-900";
 
 export function BlockNode({ id, data, selected }: Props) {
-  const { doc } = useBoardContext();
+  const { doc, peerSelections } = useBoardContext();
   const { Preview, label } = BLOCK_BY_TYPE[data.blockType];
   const sticky = data.blockType === "sticky";
+  const peerColor = peerSelections[id];
   return (
     <>
       <NodeResizer isVisible={selected} minWidth={140} minHeight={90} color="#78716c" />
       <Handle type="target" position={Position.Left} className={HANDLE} />
       <div
         data-block-type={data.blockType}
+        style={peerColor ? { boxShadow: `0 0 0 2px ${peerColor}` } : undefined}
         className={`flex h-full w-full flex-col overflow-hidden rounded-lg border ${
           selected ? "border-stone-900 dark:border-stone-100" : "border-stone-300 dark:border-stone-700"
         } ${sticky ? "bg-amber-100 text-stone-900 dark:bg-amber-200" : "bg-white dark:bg-stone-900"}`}

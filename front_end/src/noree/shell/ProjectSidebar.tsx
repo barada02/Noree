@@ -1,9 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { createProject, forgetProject, onProjectsChanged, projectHref, recentProjects } from "../lib/projects";
-
-export async function openNewProject() {
-  window.location.hash = projectHref(await createProject());
-}
+import { forgetProject, onProjectsChanged, projectHref, recentProjects } from "../lib/projects";
+import { NewProjectButton } from "./NewProjectButton";
 
 type Props = {
   activeId: string | null;
@@ -54,13 +51,10 @@ export function ProjectSidebar({ activeId, children }: Props) {
         </ul>
       </nav>
       <div className="border-t border-stone-200 p-2 dark:border-stone-800">
-        <button
-          type="button"
-          onClick={() => void openNewProject()}
+        <NewProjectButton
+          label="+ New project"
           className="w-full rounded-md border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-50 dark:border-stone-700 dark:hover:bg-stone-900"
-        >
-          + New project
-        </button>
+        />
       </div>
     </aside>
   );

@@ -129,8 +129,8 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
   <div class="facts">
     <div class="fact"><b>Thu Nov 5, 7:30 AM IST</b><span>Submission and credit claim deadline</span></div>
     <div class="fact"><b id="countdown">15 hours</b><span>Time left, as of when you opened this</span></div>
-    <div class="fact"><b>Building M1</b><span>M0 verified locally</span></div>
-    <div class="fact"><b>Rev 2</b><span>Wed Nov 4, 2026, 17:20 IST</span></div>
+    <div class="fact"><b>M2 live test next</b><span>M0, M1 and local M2 verified</span></div>
+    <div class="fact"><b>Rev 3</b><span>Wed Nov 4, 2026, 17:45 IST</span></div>
   </div>
 </header>
 
@@ -143,8 +143,8 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
   <div class="tbl"><table>
     <tr><th>Milestone</th><th>Window (IST)</th><th>Result</th><th>State</th></tr>
     <tr><td>M0 Foundation</td><td>17:00 to 18:00</td><td>Code ported, Slate agent answers through Nest, CI green</td><td><span class="pill doing">CI after push</span></td></tr>
-    <tr><td>M1 Board</td><td>18:00 to 19:15</td><td>Projects, blocks and frames that survive a refresh</td><td><span class="pill doing">doing</span></td></tr>
-    <tr><td>M2 Multiplayer</td><td>19:15 to 20:30</td><td>Two browsers in sync <strong>on the live server</strong></td><td><span class="pill todo">todo</span></td></tr>
+    <tr><td>M1 Board</td><td>18:00 to 19:15</td><td>Projects, blocks and frames that survive a refresh</td><td><span class="pill done">done</span></td></tr>
+    <tr><td>M2 Multiplayer</td><td>19:15 to 20:30</td><td>Two browsers in sync <strong>on the live server</strong></td><td><span class="pill doing">live test needs merge</span></td></tr>
     <tr><td>M3 Slate</td><td>20:30 to 22:30</td><td>Handwriting and AI inside a block, with pages</td><td><span class="pill todo">todo</span></td></tr>
     <tr><td>M4 Connections, chat</td><td>22:30 to 23:45</td><td>A line gives a block's chat real context</td><td><span class="pill todo">todo</span></td></tr>
     <tr><td>M5 3D block</td><td>23:45 to 01:00</td><td>Slate connected to 3D, Generate works live</td><td><span class="pill todo">todo</span></td></tr>
@@ -217,6 +217,8 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
     <tr><td>Uploads</td><td>Images and JS</td><td>Images only. Only the server writes JS</td><td>Otherwise anyone on a link could plant code that others run.</td></tr>
     <tr><td>Undo AI</td><td>Grouped undo per job</td><td>Remove all objects with that <code>runId</code></td><td>Objects already carry <code>runId</code>. Simpler, and any person can do it.</td></tr>
     <tr><td>Text block</td><td>Not specified</td><td>Plain text on <code>Y.Text</code></td><td>Small and reliable. A BlockNote doc block comes after V1.</td></tr>
+    <tr><td>Frame growth</td><td>Grows as a block moves</td><td>Grows when a block is dropped</td><td>Growing during a drag would make it impossible to drag a block out.</td></tr>
+    <tr><td>Project rename</td><td><code>PATCH /projects/:id</code></td><td>Written to the document, and the server copies it to <code>projects.json</code> on save</td><td>Syncs to everyone like any other edit, with no extra endpoint.</td></tr>
   </table></div>
 </section>
 
@@ -334,7 +336,7 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
 <section id="data">
   <p class="kicker">05</p>
   <h2>Data model</h2>
-  <p>One Y.Doc per project, named <code>project:&lt;uuid&gt;</code>. Layout and content are stored apart, so moving a block never touches a large Slate page.</p>
+  <p>One Y.Doc per project, named <code>project:&lt;id&gt;</code>, where the id is 48 hex characters. Layout and content are stored apart, so moving a block never touches a large Slate page.</p>
 <pre><code>doc
 ├── meta:    Y.Map                { title, createdAt, schemaVersion }
 ├── blocks:  Y.Map&lt;id, Y.Map&gt;     layout for each block and frame
@@ -604,7 +606,6 @@ generate-3d -> brief step, then agent-sandbox</code></pre>
     <tr><td>GET</td><td><code>/api/health</code></td><td>Providers and services available</td></tr>
     <tr><td>POST</td><td><code>/api/projects</code></td><td>Create a project, returns the id</td></tr>
     <tr><td>GET</td><td><code>/api/projects/:id</code></td><td>Title and last update, for a known id</td></tr>
-    <tr><td>PATCH</td><td><code>/api/projects/:id</code></td><td>Rename</td></tr>
     <tr><td>POST</td><td><code>/api/projects/:id/assets</code></td><td>Upload an image, returns the URL</td></tr>
     <tr><td>GET</td><td><code>/api/assets/:projectId/:file</code></td><td>Serve a file</td></tr>
     <tr><td>POST</td><td><code>/api/projects/:id/blocks/:blockId/slate-run</code></td><td>Start a Slate agent run</td></tr>
@@ -652,6 +653,7 @@ generate-3d -> brief step, then agent-sandbox</code></pre>
     <tr><td><code>MODAL_TOKEN_ID</code>, <code>MODAL_TOKEN_SECRET</code></td><td>Sandbox, on the server</td><td>Replaces the laptop's <code>~/.modal.toml</code></td></tr>
     <tr><td><code>SANDBOX_URL</code></td><td>Nest</td><td>Default <code>http://127.0.0.1:8000</code></td></tr>
     <tr><td><code>DATA_DIR</code></td><td>Nest</td><td>Default <code>./data</code></td></tr>
+    <tr><td><code>PROJECTS_MAX_PER_HOUR</code></td><td>Nest</td><td>Default 200</td></tr>
     <tr><td><code>AI_ENABLED</code>, <code>AI_MAX_RUNS_PER_HOUR</code>, <code>GEN3D_MAX_RUNS_PER_HOUR</code></td><td>Nest</td><td>Kill switch and spend limits</td></tr>
   </table></div>
   <h3>Local development</h3>
@@ -670,7 +672,8 @@ node scripts/sync-shared.mjs --watch # while editing shared/
     <tr><th>Threat</th><th>V1 protection</th></tr>
     <tr><td>Keys leak to the browser</td><td>All model calls happen on the server. Keys stay in server-side <code>.env</code> files</td></tr>
     <tr><td>Strangers spend your credits</td><td>Hourly limits across the whole server, one job per block, one 3D job at a time, and the <code>AI_ENABLED</code> kill switch. Limits are global because making new projects would get around per-project ones</td></tr>
-    <tr><td>Guessing project links</td><td>Random UUID ids and no list endpoint</td></tr>
+    <tr><td>Guessing project links</td><td>Random 192-bit ids and no list endpoint</td></tr>
+    <tr><td>Scripted project creation filling the disk</td><td>Hourly limit on new projects (<code>PROJECTS_MAX_PER_HOUR</code>)</td></tr>
     <tr><td>Bad document names filling the disk</td><td>Hocuspocus <code>onConnect</code> rejects names that don't match a known project, which also blocks path tricks</td></tr>
     <tr><td>Oversized messages</td><td><code>websocketOptions.maxPayload</code> and a 10 MB upload limit</td></tr>
     <tr><td>Malicious uploads</td><td>PNG, JPEG and WebP only, checked by file bytes. Names are content hashes. Served with <code>nosniff</code>. No SVG or HTML</td></tr>
@@ -706,26 +709,28 @@ node scripts/sync-shared.mjs --watch # while editing shared/
   <div class="milestone">
     <h3>M1 Board <span class="when">18:00 to 19:15</span></h3>
     <ul>
-      <li><input type="checkbox" disabled> Project sidebar: create, switch, rename, remembered in browser storage</li>
-      <li><input type="checkbox" disabled> Block menu: Text, Sticky, Slate placeholder, 3D placeholder, Frame</li>
-      <li><input type="checkbox" disabled> React Flow canvas: zoom, pan, move, resize, select, delete</li>
-      <li><input type="checkbox" disabled> Frames: drop in, drop out, move together, grow to fit, list in sidebar with fly-to</li>
-      <li><input type="checkbox" disabled> <code>useBoard</code> with a local Y.Doc and IndexedDB</li>
+      <li><input type="checkbox" disabled checked> Project sidebar: create, switch, rename, remembered in browser storage</li>
+      <li><input type="checkbox" disabled checked> Block menu: Text, Sticky, Slate placeholder, 3D placeholder, Frame</li>
+      <li><input type="checkbox" disabled checked> React Flow canvas: zoom, pan, move, resize, select, delete</li>
+      <li><input type="checkbox" disabled checked> Frames: drop in, drop out, move together, grow to fit, list in sidebar with fly-to</li>
+      <li><input type="checkbox" disabled checked> <code>useBoard</code> with a local Y.Doc and IndexedDB</li>
     </ul>
     <p class="dw"><strong>Done when:</strong> you can make two projects, add and group blocks, reload, and everything is still there.</p>
+    <p class="dw"><strong>Verified Nov 4, 17:40:</strong> browser test passes. Connections were also built here, ahead of M4.</p>
   </div>
 
   <div class="milestone">
     <h3>M2 Multiplayer <span class="when">19:15 to 20:30</span></h3>
     <ul>
-      <li><input type="checkbox" disabled> Hocuspocus in Nest on <code>/collab</code>, with file persistence and name checks (G4)</li>
-      <li><input type="checkbox" disabled> Provider connection, status indicator, colors, live cursors. No accounts: each person gets a random display name they can change, saved in their browser</li>
-      <li><input type="checkbox" disabled> Per-person undo, share link button</li>
-      <li><input type="checkbox" disabled> Server-side document write, proven by a test</li>
-      <li><input type="checkbox" disabled> Shutdown flush and stale job handling (G6)</li>
+      <li><input type="checkbox" disabled checked> Hocuspocus in Nest on <code>/collab</code>, with file persistence and name checks (G4)</li>
+      <li><input type="checkbox" disabled checked> Provider connection, status indicator, colors, live cursors. No accounts: each person gets a random display name they can change, saved in their browser</li>
+      <li><input type="checkbox" disabled checked> Per-person undo, share link button</li>
+      <li><input type="checkbox" disabled checked> Server-side document write, proven by a test</li>
+      <li><input type="checkbox" disabled checked> Shutdown flush and stale job handling (G6)</li>
       <li><input type="checkbox" disabled> <strong>Merge to <code>main</code> and test on the live site</strong>, including the camera pages</li>
     </ul>
     <p class="dw"><strong>Done when:</strong> two browsers stay in sync on <code>kanya.alito.tech</code>, a redeploy loses nothing, and a server script can add a block that appears live.</p>
+    <p class="dw"><strong>Verified locally Nov 4, 17:40:</strong> two browsers through the dev proxy (three runs in a row), plus 29 backend tests covering server restart, offline merge, rejected names, agent writes, and camera sockets beside <code>/collab</code>. <strong>Still open:</strong> the same on the live site, which needs a merge to <code>main</code>. Server memory check (G7) moved here from M0.</p>
     <p class="gate"><strong>Gate at 20:30:</strong> if sync isn't reliable, keep the local Y.Doc, carry on, and come back after M5. The rest of the code doesn't depend on the network.</p>
   </div>
 

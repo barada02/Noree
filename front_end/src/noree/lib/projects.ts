@@ -1,5 +1,3 @@
-import { newId } from "../../shared/schema.js";
-
 /**
  * Each browser remembers its own projects. There is deliberately no server-side list: with no
  * login, a list would hand every project link to anyone who asked.
@@ -41,9 +39,24 @@ export function onProjectsChanged(listener: () => void): () => void {
   return () => window.removeEventListener(EVENT, listener);
 }
 
-/** M2 replaces this with POST /api/projects, which also registers the project on the server. */
 export async function createProject(): Promise<string> {
-  return newId() + newId();
+  const res = await fetch("/api/projects", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: "{}",
+  });
+  if (!res.ok) throw new Error(res.status === 429 ? "Too many new projects right now. Try again later." : "Couldn't create the project.");
+  return ((await res.json()) as { id: string }).id;
+}
+
+/** False only when the server says it doesn't exist. A network failure still opens the local copy. */
+export async function projectExists(id: string): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/projects/${id}`);
+    return res.status !== 404;
+  } catch {
+    return true;
+  }
 }
 
 export function projectHref(id: string) {

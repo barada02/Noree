@@ -6,6 +6,14 @@ const ANIMALS = ["Otter", "Heron", "Fox", "Lynx", "Wren", "Seal", "Hare", "Crane
 
 const pick = (list: string[]) => list[Math.floor(Math.random() * list.length)];
 
+function store(id: string, name: string) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify({ id, name }));
+  } catch {
+    // Storage can be refused. The identity then lasts for this page load.
+  }
+}
+
 /** There are no accounts, so a person is a random id and an editable name kept in this browser. */
 export function localActor(): ActorRef {
   try {
@@ -15,12 +23,12 @@ export function localActor(): ActorRef {
     // Fall through and make a new identity.
   }
   const actor: ActorRef = { kind: "person", id: newId(), name: `${pick(ADJECTIVES)} ${pick(ANIMALS)}` };
-  try {
-    localStorage.setItem(KEY, JSON.stringify({ id: actor.id, name: actor.name }));
-  } catch {
-    // Storage can be refused. The identity then lasts for this page load.
-  }
+  store(actor.id, actor.name);
   return actor;
+}
+
+export function renameLocalActor(name: string) {
+  store(localActor().id, name);
 }
 
 /** Marks this browser's own edits, so undo tracks them and not edits from others or from agents. */
