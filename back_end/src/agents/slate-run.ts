@@ -107,6 +107,7 @@ export async function runSlateJob(context: JobContext, input: SlateRunInput, cha
       context.fail(event.message);
     } else if (event.type === 'done') {
       await context.addStep({ title: 'Done', status: 'pass', note: event.summary });
+      context.setResult(event.summary);
       await context.addMessage({ role: 'assistant', author: SLATE_AGENT, text: event.summary, meta: { ok: true } });
     }
   }

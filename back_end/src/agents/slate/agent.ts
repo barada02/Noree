@@ -1,5 +1,6 @@
 import type { AgentEvent, RunRequest } from '../../shared/protocol.js'
-import type { Msg, Provider } from './providers/types.js'
+import { runToolLoop } from '../engine/loop.js'
+import type { Provider } from './providers/types.js'
 import { Scene } from './scene.js'
 import { TOOLS, executeTool } from './tools.js'
 
@@ -51,9 +52,7 @@ export async function* runAgent(req: RunRequest, chain: Provider[], signal?: Abo
     return
   }
   const scene = new Scene(req)
-  let provider = chain[0]
-  let fallbackIdx = 0
-  yield { type: 'start', provider: provider.id, model: provider.model, clusters: scene.clusters }
+  yield { type: 'start', provider: chain[0].id, model: chain[0].model, clusters: scene.clusters }
 
   if (!scene.clusters.length) {
     yield { type: 'done', summary: 'The canvas is empty: write something first.', steps: 0, ops: 0 }
@@ -61,67 +60,51 @@ export async function* runAgent(req: RunRequest, chain: Provider[], signal?: Abo
   }
 
   const instruction = req.instruction?.trim() || 'Explain what I wrote.'
-  const msgs: Msg[] = [{ role: 'user', text: `${instruction}\n\n${describe(scene, req)}`, image: req.snapshot }]
-
   let ops = 0
   let nudged = false
   let summary = ''
 
-  for (let step = 1; step <= MAX_STEPS; step++) {
-    if (signal?.aborted) return
-    let res
-    for (;;) {
-      try {
-        res = await provider.step(SYSTEM, msgs, TOOLS, signal)
-        break
-      } catch (e) {
-        if (signal?.aborted) return
-        const reason = (e as Error).message
-        const next = chain[fallbackIdx + 1]
-        if (!next) {
-          yield { type: 'error', message: `${provider.label} failed: ${reason}` }
-          yield { type: 'done', summary: summary || 'Stopped after a model error.', steps: step - 1, ops }
-          return
-        }
-        yield { type: 'fallback', from: provider.id, to: next.id, reason }
-        provider = next
-        fallbackIdx += 1
-      }
-    }
-
-    yield { type: 'step', step, provider: provider.id, model: provider.model, ms: res.ms, inTokens: res.inTokens, outTokens: res.outTokens }
-    if (res.reasoning) yield { type: 'thinking', text: res.reasoning.slice(0, 700) }
-    if (res.text) yield { type: 'thought', text: res.text }
-    msgs.push({ role: 'assistant', text: res.text, toolCalls: res.toolCalls })
-
-    if (!res.toolCalls.length) {
-      if (ops === 0 && !nudged) {
-        nudged = true
-        msgs.push({ role: 'user', text: 'You have not drawn anything yet. Use the tools: draw_outline, draw_arrow, add_text_box, then finish.' })
-        continue
-      }
-      summary = summary || res.text
-      break
-    }
-
-    let finished = false
-    for (const call of res.toolCalls) {
+  const loop = runToolLoop<AgentEvent>({
+    system: SYSTEM,
+    messages: [{ role: 'user', text: `${instruction}\n\n${describe(scene, req)}`, image: req.snapshot }],
+    tools: TOOLS,
+    chain,
+    maxSteps: MAX_STEPS,
+    signal,
+    execute: (call) => {
       const out = executeTool(scene, call.name, call.rawArgs)
-      let argsView: unknown = call.rawArgs
-      try { argsView = JSON.parse(call.rawArgs) } catch { /* keep raw */ }
-      yield { type: 'tool', name: call.name, args: argsView, ok: out.ok, result: out.result }
-      for (const op of out.ops) {
-        ops += 1
-        yield { type: 'op', op }
-      }
-      msgs.push({ role: 'tool', callId: call.id, name: call.name, result: out.ok ? out.result : `ERROR: ${out.result}` })
+      ops += out.ops.length
       if (out.done) {
-        finished = true
         try { summary = JSON.parse(call.rawArgs).summary ?? '' } catch { /* ignore */ }
       }
+      return { ok: out.ok, result: out.result, done: out.done, events: out.ops.map((op): AgentEvent => ({ type: 'op', op })) }
+    },
+    nudge: () => {
+      if (ops > 0 || nudged) return null
+      nudged = true
+      return 'You have not drawn anything yet. Use the tools: draw_outline, draw_arrow, add_text_box, then finish.'
+    },
+  })
+
+  let steps = 0
+  let reason = ''
+  let reply = ''
+  for await (const event of loop) {
+    if (event.type === 'stopped') {
+      steps = event.steps
+      reason = event.reason
+      reply = event.text
+    } else {
+      yield event
     }
-    if (finished) break
   }
+
+  if (reason === 'aborted') return
+  if (reason === 'failed') {
+    yield { type: 'done', summary: summary || 'Stopped after a model error.', steps, ops }
+    return
+  }
+  if (reason === 'replied') summary = summary || reply
 
   // Tidy up: an arrow that never got anything attached (e.g. an attach failed and the model retried
   // from a new arrow) would point at nothing. Remove it from the canvas.
@@ -133,5 +116,5 @@ export async function* runAgent(req: RunRequest, chain: Provider[], signal?: Abo
     yield { type: 'remove', id: o.id, reason: 'arrow had nothing attached' }
   }
 
-  yield { type: 'done', summary: summary || 'Done.', steps: msgs.filter((m) => m.role === 'assistant').length, ops }
+  yield { type: 'done', summary: summary || 'Done.', steps, ops }
 }

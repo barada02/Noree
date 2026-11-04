@@ -153,6 +153,8 @@ export async function runGenerateJob(context: JobContext, input: GenerateInput, 
       (current.get('versions') as Y.Array<Model3dVersion>).push([version]);
       current.set('currentVersionId', version.id);
     });
+    const summary = entry.status === 'approved' ? 'Generated the 3D model, and it passed the sandbox test and review.' : `Generated the 3D model, but it did not pass review after ${result.attempts} attempts, so it is marked as a draft.`;
+    context.setResult(summary);
     await context.addMessage({
       role: 'assistant',
       author: MODEL_AGENT,

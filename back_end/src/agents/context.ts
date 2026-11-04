@@ -23,7 +23,7 @@ function clip(text: string): string {
   return text.length > MAX_SOURCE_CHARS ? `${text.slice(0, MAX_SOURCE_CHARS)}\n[cut off here]` : text;
 }
 
-async function readSlate(connection: DirectConnection, content: Y.Map<unknown>, transcribe: Transcriber): Promise<{ text: string; images: string[] }> {
+async function readSlate(doc: Y.Doc, content: Y.Map<unknown>, transcribe: Transcriber): Promise<{ text: string; images: string[] }> {
   const pages = (content.get('pages') as Y.Array<Y.Map<unknown>>).toArray();
   const currentId = content.get('currentPageId');
   // The current page matters most, so it's first when the limits apply.
@@ -43,7 +43,7 @@ async function readSlate(connection: DirectConnection, content: Y.Map<unknown>, 
       const text = await transcribe(asset);
       if (text !== null) {
         transcript = { hash: asset, text };
-        await connection.transact(() => page.set('transcript', transcript));
+        doc.transact(() => page.set('transcript', transcript));
       } else {
         transcript = null;
       }
@@ -59,7 +59,7 @@ async function readSlate(connection: DirectConnection, content: Y.Map<unknown>, 
   return { text: parts.join('\n\n') || 'This Slate is empty.', images };
 }
 
-async function readBlock(connection: DirectConnection, doc: Y.Doc, blockId: string, transcribe: Transcriber): Promise<BlockContext | null> {
+export async function readBlock(doc: Y.Doc, blockId: string, transcribe: Transcriber): Promise<BlockContext | null> {
   const { blocks, content } = docParts(doc);
   const block = blocks.get(blockId);
   if (!block) return null;
@@ -71,7 +71,7 @@ async function readBlock(connection: DirectConnection, doc: Y.Doc, blockId: stri
   if (type === 'text' || type === 'sticky') {
     text = String(blockContent?.get('text') ?? '');
   } else if (type === 'slate' && blockContent) {
-    const slate = await readSlate(connection, blockContent, transcribe);
+    const slate = await readSlate(doc, blockContent, transcribe);
     text = slate.text;
     images = slate.images;
   } else if (type === 'model3d' && blockContent) {
@@ -98,10 +98,10 @@ export async function documentOf(connection: DirectConnection): Promise<Y.Doc> {
 /** The block itself, then what it reads from. Applies the limits that keep model calls small. */
 export async function collectContext(connection: DirectConnection, blockId: string, transcribe: Transcriber): Promise<{ own: BlockContext | null; sources: BlockContext[] }> {
   const doc = await documentOf(connection);
-  const own = await readBlock(connection, doc, blockId, transcribe);
+  const own = await readBlock(doc, blockId, transcribe);
   const sources: BlockContext[] = [];
   for (const sourceId of incomingSources(doc, blockId)) {
-    const source = await readBlock(connection, doc, sourceId, transcribe);
+    const source = await readBlock(doc, sourceId, transcribe);
     if (source) sources.push(source);
   }
   // Sources come before the block's own, and the total is capped.
