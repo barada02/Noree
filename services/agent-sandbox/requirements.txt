@@ -1,0 +1,6 @@
+modal==1.6.3
+openai
+python-dotenv
+fastapi
+uvicorn[standard]
+pydantic
