@@ -129,8 +129,8 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
   <div class="facts">
     <div class="fact"><b>Thu Nov 5, 7:30 AM IST</b><span>Submission and credit claim deadline</span></div>
     <div class="fact"><b id="countdown">15 hours</b><span>Time left, as of when you opened this</span></div>
-    <div class="fact"><b>Not started</b><span>Waiting on your go-ahead for M0</span></div>
-    <div class="fact"><b>Rev 1</b><span>Wed Nov 4, 2026, 16:40 IST</span></div>
+    <div class="fact"><b>Building M1</b><span>M0 verified locally</span></div>
+    <div class="fact"><b>Rev 2</b><span>Wed Nov 4, 2026, 17:20 IST</span></div>
   </div>
 </header>
 
@@ -142,8 +142,8 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
   </div>
   <div class="tbl"><table>
     <tr><th>Milestone</th><th>Window (IST)</th><th>Result</th><th>State</th></tr>
-    <tr><td>M0 Foundation</td><td>17:00 to 18:00</td><td>Code ported, Slate agent answers through Nest, CI green</td><td><span class="pill todo">todo</span></td></tr>
-    <tr><td>M1 Board</td><td>18:00 to 19:15</td><td>Projects, blocks and frames that survive a refresh</td><td><span class="pill todo">todo</span></td></tr>
+    <tr><td>M0 Foundation</td><td>17:00 to 18:00</td><td>Code ported, Slate agent answers through Nest, CI green</td><td><span class="pill doing">CI after push</span></td></tr>
+    <tr><td>M1 Board</td><td>18:00 to 19:15</td><td>Projects, blocks and frames that survive a refresh</td><td><span class="pill doing">doing</span></td></tr>
     <tr><td>M2 Multiplayer</td><td>19:15 to 20:30</td><td>Two browsers in sync <strong>on the live server</strong></td><td><span class="pill todo">todo</span></td></tr>
     <tr><td>M3 Slate</td><td>20:30 to 22:30</td><td>Handwriting and AI inside a block, with pages</td><td><span class="pill todo">todo</span></td></tr>
     <tr><td>M4 Connections, chat</td><td>22:30 to 23:45</td><td>A line gives a block's chat real context</td><td><span class="pill todo">todo</span></td></tr>
@@ -690,15 +690,17 @@ node scripts/sync-shared.mjs --watch # while editing shared/
   <div class="milestone">
     <h3>M0 Foundation <span class="when">17:00 to 18:00</span></h3>
     <ul>
-      <li><input type="checkbox" disabled> Copy <code>ink-agent</code> and <code>agent-sandbox</code> code, recording source commits</li>
-      <li><input type="checkbox" disabled> <code>shared/</code>, <code>sync-shared.mjs</code>, npm hooks, ignore rules (G2)</li>
-      <li><input type="checkbox" disabled> Add dependencies to both apps</li>
-      <li><input type="checkbox" disabled> Env loading and <code>.env.example</code> (G1), upload limit (G3), check server memory (G7)</li>
-      <li><input type="checkbox" disabled> Port the Slate agent to Nest, with a temporary endpoint that proves a real run</li>
-      <li><input type="checkbox" disabled> <code>schema.ts</code> and <code>actions.ts</code>, with tests</li>
-      <li><input type="checkbox" disabled> <code>#/app</code> and <code>#/p/&lt;id&gt;</code> routes with an empty shell</li>
+      <li><input type="checkbox" disabled checked> Copy <code>ink-agent</code> and <code>agent-sandbox</code> code, recording source commits</li>
+      <li><input type="checkbox" disabled checked> <code>shared/</code>, <code>sync-shared.mjs</code>, npm hooks, ignore rules (G2)</li>
+      <li><input type="checkbox" disabled checked> Add dependencies to both apps</li>
+      <li><input type="checkbox" disabled checked> Env loading and <code>.env.example</code> (G1), upload limit (G3)</li>
+      <li><input type="checkbox" disabled> Check server memory (G7). Needs server access, moved to M2</li>
+      <li><input type="checkbox" disabled checked> Port the Slate agent to Nest, with a temporary endpoint that proves a real run</li>
+      <li><input type="checkbox" disabled checked> <code>schema.ts</code> and <code>actions.ts</code>, with tests</li>
+      <li><input type="checkbox" disabled checked> <code>#/app</code> and <code>#/p/&lt;id&gt;</code> routes with an empty shell</li>
     </ul>
     <p class="dw"><strong>Done when:</strong> a pull request passes CI, a real model returns AI objects through Nest, and the landing, camera and experiment pages still work.</p>
+    <p class="dw"><strong>Verified Nov 4, 17:15:</strong> lint, 21 unit tests, 9 e2e tests and both builds pass locally. A real Muse Spark Open run through Nest read <code>z = 3 + 4i</code> and produced an outline, arrows, an Argand widget and a text box in 39 s. All routes load in Edge. <strong>Still open:</strong> CI on GitHub, after a push.</p>
   </div>
 
   <div class="milestone">

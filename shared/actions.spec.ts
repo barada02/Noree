@@ -1,7 +1,7 @@
 import * as Y from 'yjs';
 import { ZodError } from 'zod';
 import { absolutePosition, ActionError, applyAction, connectionProblem } from './actions.js';
-import { docParts, newSlatePage, PAGE, readEdge, readLayout, type ActorRef, type BlockType } from './schema.js';
+import { docParts, PAGE, readEdge, readLayout, type ActorRef, type BlockType } from './schema.js';
 
 const me: ActorRef = { kind: 'person', id: 'p1', name: 'Test' };
 
@@ -92,7 +92,11 @@ describe('frames', () => {
     const { w, h } = layout(frame);
     const inside = add('text', { x: 10, y: 10 }, frame);
     expect(layout(frame)).toMatchObject({ w, h });
+    // Moving alone must not grow it, or dragging a block out would drag the frame's edge along.
     applyAction(doc, { type: 'block.move', id: inside, to: { x: w + 100, y: 10 } }, me);
+    expect(layout(frame)).toMatchObject({ w, h });
+    // Dropping does.
+    applyAction(doc, { type: 'frame.assign', blockId: inside, frameId: frame }, me);
     expect(layout(frame).w).toBe(w + 100 + layout(inside).w + 24);
     expect(layout(frame).h).toBe(h);
   });
@@ -190,7 +194,6 @@ describe('slate and threads', () => {
 
   it('uses one coordinate space per page', () => {
     expect(PAGE).toEqual({ width: 1600, height: 1000 });
-    expect(newSlatePage().get('id')).not.toBe(newSlatePage().get('id'));
   });
 });
 

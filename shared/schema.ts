@@ -108,9 +108,10 @@ export function readEdge(edge: Y.Map<unknown>): EdgeRecord {
   return edge.toJSON() as EdgeRecord;
 }
 
-export function newSlatePage(): Y.Map<unknown> {
+/** Takes the id because a Y.Map cannot be read until it is attached to a document. */
+export function newSlatePage(id: string): Y.Map<unknown> {
   const page = new Y.Map<unknown>();
-  page.set('id', newId());
+  page.set('id', id);
   page.set('strokes', new Y.Array<Stroke>());
   page.set('objects', new Y.Map<AiObject>());
   page.set('widgetValues', new Y.Map<unknown>());
@@ -127,11 +128,11 @@ export function newContent(type: BlockType): Y.Map<unknown> | null {
   if (type === 'text' || type === 'sticky') {
     content.set('text', new Y.Text());
   } else if (type === 'slate') {
-    const page = newSlatePage();
+    const pageId = newId();
     const pages = new Y.Array<Y.Map<unknown>>();
-    pages.push([page]);
+    pages.push([newSlatePage(pageId)]);
     content.set('pages', pages);
-    content.set('currentPageId', page.get('id'));
+    content.set('currentPageId', pageId);
   } else {
     content.set('prompt', '');
     content.set('versions', new Y.Array<Model3dVersion>());

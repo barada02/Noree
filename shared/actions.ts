@@ -113,7 +113,10 @@ function requireFrame(doc: Y.Doc, frameId: string): Y.Map<unknown> {
 
 const FRAME_PADDING = 24;
 
-/** A frame grows to fit a block placed inside it. Children are relative, so only w and h change. */
+/**
+ * A frame grows to fit a block dropped inside it. Children are relative, so only w and h change.
+ * This happens on assignment and not on every move, or a block could never be dragged out.
+ */
 function growFrameToFit(frame: Y.Map<unknown>, child: Pick<BlockLayout, 'x' | 'y' | 'w' | 'h'>): void {
   const needW = child.x + child.w + FRAME_PADDING;
   const needH = child.y + child.h + FRAME_PADDING;
@@ -199,7 +202,7 @@ function slatePages(doc: Y.Doc, blockId: string): Y.Array<Y.Map<unknown>> {
 }
 
 function run(doc: Y.Doc, action: Action, actor: ActorRef): ActionResult {
-  const { blocks, edges, order, threads } = docParts(doc);
+  const { edges, order, threads } = docParts(doc);
   switch (action.type) {
     case 'block.add':
       return { id: addBlock(doc, action, actor) };
@@ -207,9 +210,6 @@ function run(doc: Y.Doc, action: Action, actor: ActorRef): ActionResult {
       const block = requireBlock(doc, action.id);
       block.set('x', action.to.x);
       block.set('y', action.to.y);
-      const parentId = block.get('parentId') as string | null;
-      const parent = parentId ? blocks.get(parentId) : undefined;
-      if (parent) growFrameToFit(parent, readLayout(block));
       return {};
     }
     case 'block.resize': {
@@ -255,9 +255,9 @@ function run(doc: Y.Doc, action: Action, actor: ActorRef): ActionResult {
       edges.delete(action.id);
       return {};
     case 'slate.page.add': {
-      const page = newSlatePage();
-      slatePages(doc, action.blockId).push([page]);
-      return { id: page.get('id') as string };
+      const pageId = newId();
+      slatePages(doc, action.blockId).push([newSlatePage(pageId)]);
+      return { id: pageId };
     }
     case 'slate.undoRun': {
       const page = slatePages(doc, action.blockId)
