@@ -3,6 +3,7 @@ import {
   BackgroundVariant,
   Controls,
   MiniMap,
+  Panel,
   ReactFlow,
   useReactFlow,
   useViewport,
@@ -62,6 +63,23 @@ export function BoardCanvas({ doc, projectId, actor, board, presence, onDragStar
   const { theme } = useTheme();
   const flow = useReactFlow<BoardNode>();
   const [hoverFrameId, setHoverFrameId] = useState<string | null>(null);
+  const [mapOpen, setMapOpen] = useState(() => {
+    try {
+      return localStorage.getItem("noree-minimap") !== "closed";
+    } catch {
+      return true;
+    }
+  });
+  const toggleMap = () => {
+    setMapOpen((open) => {
+      try {
+        localStorage.setItem("noree-minimap", open ? "closed" : "open");
+      } catch {
+        // Private windows can refuse storage; toggling for this board still works.
+      }
+      return !open;
+    });
+  };
   const { nodes, edges, onNodesChange, onEdgesChange, frameAt, finishDrag, deleteSelected, connect, canConnect, act } = board;
   const { peers, setCursor, setSelected } = presence;
 
@@ -166,7 +184,12 @@ export function BoardCanvas({ doc, projectId, actor, board, presence, onDragStar
       >
         <Background variant={BackgroundVariant.Dots} gap={26} size={1.6} />
         <Controls />
-        <MiniMap pannable zoomable />
+        {mapOpen && <MiniMap pannable zoomable />}
+        <Panel position="bottom-right" className="hidden md:block" style={mapOpen ? { marginBottom: 168, marginRight: 12 } : undefined}>
+          <button type="button" onClick={toggleMap} aria-expanded={mapOpen} className="n-btn n-btn--outline n-btn--sm bg-n-surface shadow-[var(--n-shadow-1)]">
+            {mapOpen ? "Hide map" : "Show map"}
+          </button>
+        </Panel>
         <PeerCursors peers={peers} />
       </ReactFlow>
     </BoardContext.Provider>
