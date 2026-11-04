@@ -2,7 +2,7 @@
 
 A shared board where people and AI agents plan together. Each project is one board, and a board is made of blocks. Write by hand on a Slate and the AI annotates it. Draw a line from one block to another to give the AI context. Press Generate to turn that context into a working 3D model. Everyone on the link sees all of it live, including the AI's work.
 
-**Live:** https://kanya.alito.tech (choose **Open app**)
+**Live:** https://kanya.alito.tech (choose **Open the app**)
 
 ## What it does
 
@@ -102,6 +102,10 @@ Browser tests are in [e2e/](e2e/). They drive two real browsers, and some make r
 | `deploy/` | CI/CD scripts. See [deploy/README.md](deploy/README.md) |
 | `front_end/src/experiments/`, `pages/` | Earlier experiments, kept as they were |
 
+## Look and feel
+
+A calm, paper-and-moss look: warm cream surfaces, one deep green, and handwriting only for greetings. Fonts are Fraunces, Figtree and Caveat, bundled with the app. The background photography, covers and logo mark were made for this project, and the photography was generated with Muse Image. The product name lives in one place, `front_end/src/brand.ts`.
+
 ## Built during the hackathon
 
 All of this was built during the event, which ran from Oct 26 to Nov 4, 2026. The first commit in this repo is from Nov 2.
@@ -118,4 +122,5 @@ This is a first version, and these are deliberate:
 - Anyone with a link can edit that board. There are no accounts yet.
 - Documents and assets are stored as files on one server, with no backup.
 - A Slate's AI run looks at its own page. Connections feed block chat and 3D generation.
+- There is no table or chart block yet. Slate has graphing widgets for functions and complex numbers.
 - Handwriting quality depends on the model, so very messy writing can be misread.

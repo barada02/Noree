@@ -103,7 +103,7 @@ export async function runGenerateJob(context: JobContext, input: GenerateInput, 
     let result: Awaited<ReturnType<SandboxClient['generate']>> | undefined;
     let failure: unknown;
     const generating = sandbox
-      .generate({ prompt: brief, viewport: { width: 800, height: 600 }, scene: sources.map((s) => s.title), perfTier: 'high' }, signal)
+      .generate({ prompt: brief, viewport: { width: 800, height: 600 }, scene: sources.map((s) => s.title), theme: { background: '#0c0c0d', accent: '#3f8a5c' }, perfTier: 'high' }, signal)
       .then((value) => {
         result = value;
       })

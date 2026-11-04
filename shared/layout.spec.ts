@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import { absolutePosition, applyAction } from './actions.js';
-import { placeFrame, placeInFrame, placeLoose } from './layout.js';
+import { fitAndReflowFrames, placeFrame, placeInFrame, placeLoose } from './layout.js';
 import { docParts, readLayout, type ActorRef, type BlockType } from './schema.js';
 
 const me: ActorRef = { kind: 'agent', id: 'a', name: 'Agent' };
@@ -74,6 +74,46 @@ describe('placing what agents create', () => {
     frame();
     frame();
     expect(overlaps()).toEqual([]);
+  });
+
+  it('fits frames to their contents and spaces them out again, without overlaps', () => {
+    const { doc, frame, inFrame, overlaps, loose } = setup();
+    const a = frame();
+    const b = frame();
+    const c = frame();
+    inFrame(a, 'text');
+    inFrame(b, 'text');
+    inFrame(b, 'sticky');
+    inFrame(b, 'text');
+    inFrame(c, 'slate');
+    loose('sticky');
+    const ids = [a, b, c];
+    const before = ids.map((id) => readLayout(docParts(doc).blocks.get(id)!));
+    fitAndReflowFrames(doc, ids);
+    const after = ids.map((id) => readLayout(docParts(doc).blocks.get(id)!));
+    after.forEach((f, i) => {
+      expect(f.w).toBeLessThan(before[i].w);
+      expect(f.w).toBeGreaterThanOrEqual(320);
+      expect(f.h).toBeGreaterThanOrEqual(200);
+    });
+    expect(after[1].x).toBeGreaterThan(after[0].x + after[0].w);
+    expect(after[2].x).toBeGreaterThan(after[1].x + after[1].w);
+    expect(overlaps()).toEqual([]);
+    // Contents stay inside their frame.
+    for (const child of [...docParts(doc).blocks.values()].map(readLayout).filter((b) => b.parentId)) {
+      const f = after[ids.indexOf(child.parentId!)];
+      expect(child.x + child.w).toBeLessThanOrEqual(f.w);
+      expect(child.y + child.h).toBeLessThanOrEqual(f.h);
+    }
+  });
+
+  it('leaves empty frames and unknown ids alone', () => {
+    const { doc, frame } = setup();
+    const empty = frame();
+    const size = readLayout(docParts(doc).blocks.get(empty)!);
+    fitAndReflowFrames(doc, [empty, 'missing']);
+    expect(readLayout(docParts(doc).blocks.get(empty)!)).toMatchObject({ w: size.w, h: size.h });
+    expect(() => fitAndReflowFrames(doc, [])).not.toThrow();
   });
 
   it('reports a missing frame', () => {

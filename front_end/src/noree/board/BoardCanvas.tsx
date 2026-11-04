@@ -164,7 +164,7 @@ export function BoardCanvas({ doc, projectId, actor, board, presence, onDragStar
         zoomOnDoubleClick={false}
         deleteKeyCode={paused ? null : ["Backspace", "Delete"]}
       >
-        <Background variant={BackgroundVariant.Dots} gap={24} />
+        <Background variant={BackgroundVariant.Dots} gap={26} size={1.6} />
         <Controls />
         <MiniMap pannable zoomable />
         <PeerCursors peers={peers} />

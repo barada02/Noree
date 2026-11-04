@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { createProject, projectHref } from "../lib/projects";
+import { PlusIcon } from "../ui/icons";
 
-export function NewProjectButton({ label, className }: { label: string; className: string }) {
+export function NewProjectButton({ label, className = "n-btn n-btn--primary", showPlus = true }: { label: string; className?: string; showPlus?: boolean }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,11 +20,12 @@ export function NewProjectButton({ label, className }: { label: string; classNam
 
   return (
     <>
-      <button type="button" disabled={busy} onClick={() => void create()} className={`disabled:opacity-60 ${className}`}>
+      <button type="button" disabled={busy} onClick={() => void create()} className={className}>
+        {showPlus && <PlusIcon />}
         {label}
       </button>
       {error && (
-        <p role="alert" className="mt-2 text-xs text-red-700 dark:text-red-400">
+        <p role="alert" className="mt-2 text-xs text-n-danger">
           {error} Check your connection and try again.
         </p>
       )}

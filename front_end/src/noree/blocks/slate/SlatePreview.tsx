@@ -12,17 +12,17 @@ export function SlatePreview({ doc, id }: { doc: Y.Doc; id: string }) {
   if (!types) return null;
   const empty = strokes.length === 0 && objects.length === 0 && pastes.length === 0;
   return (
-    <div className="slate-scope relative h-full w-full bg-white">
+    <div className="slate-scope relative h-full w-full bg-n-surface">
       <WidgetStateProvider map={types.widgetValues}>
         <SlatePageCanvas strokes={strokes} objects={objects} pastes={pastes} />
       </WidgetStateProvider>
       {empty && (
-        <p className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-stone-500">
+        <p className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-n-ink-3">
           Double-click to write
         </p>
       )}
       {count > 1 && (
-        <span className="pointer-events-none absolute right-2 bottom-1 font-mono text-[10px] text-stone-500">
+        <span className="pointer-events-none absolute right-2 bottom-1 font-mono text-[10px] text-n-ink-3">
           {index + 1} / {count}
         </span>
       )}

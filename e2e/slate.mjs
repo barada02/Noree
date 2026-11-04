@@ -61,7 +61,7 @@ async function write(page, text, startX, startY, size) {
 
 const a = await open();
 await a.goto(`${base}/#/`);
-await a.getByRole('link', { name: 'Open app' }).click();
+await a.getByRole('link', { name: 'Open the app' }).click();
 await a.getByRole('button', { name: 'New project', exact: true }).first().click();
 await a.waitForSelector('[aria-label="Project name"]');
 await a.locator('[data-connection="connected"]').waitFor({ timeout: 8000 });

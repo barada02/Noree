@@ -62,3 +62,31 @@ export function placeLoose(doc: Y.Doc, type: BlockType): Point {
   if (x + size.w <= left + ROW_WIDTH && rowTop + size.h + GAP <= top) return { x, y: rowTop };
   return { x: left, y: rowTop - size.h - GAP };
 }
+
+const MIN_FRAME = { w: 320, h: 200 };
+
+/** Shrinks a frame to fit what's in it, with the same padding as when blocks are placed. */
+export function fitFrame(doc: Y.Doc, frameId: string): void {
+  const layouts = allLayouts(doc);
+  const frame = docParts(doc).blocks.get(frameId);
+  const children = layouts.filter((b) => b.parentId === frameId);
+  if (!frame || !children.length) return;
+  frame.set('w', Math.max(MIN_FRAME.w, Math.max(...children.map((b) => b.x + b.w)) + PADDING));
+  frame.set('h', Math.max(MIN_FRAME.h, Math.max(...children.map((b) => b.y + b.h)) + PADDING));
+}
+
+/** Fits several frames, then spaces them out left to right again, since they were placed when they were bigger. */
+export function fitAndReflowFrames(doc: Y.Doc, frameIds: string[]): void {
+  const { blocks } = docParts(doc);
+  const frames = frameIds.map((id) => blocks.get(id)).filter((f): f is Y.Map<unknown> => !!f);
+  if (!frames.length) return;
+  doc.transact(() => {
+    for (const id of frameIds) fitFrame(doc, id);
+    const ordered = [...frames].sort((a, b) => (a.get('x') as number) - (b.get('x') as number));
+    let x = ordered[0].get('x') as number;
+    for (const frame of ordered) {
+      frame.set('x', x);
+      x += (frame.get('w') as number) + GAP * 2;
+    }
+  });
+}

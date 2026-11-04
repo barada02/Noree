@@ -15,6 +15,7 @@ export type GeneratePayload = {
   prompt: string;
   viewport: { width: number; height: number };
   scene: string[];
+  theme?: { background: string; accent: string };
   perfTier: 'high' | 'low';
 };
 

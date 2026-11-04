@@ -49,21 +49,21 @@ export async function makeSnapshot(
   }
   for (const o of objects) {
     if (o.kind === 'ellipse') {
-      parts.push(`<path d="${ellipsePath(o.cx, o.cy, o.rx, o.ry)}" fill="none" stroke="#e85d26" stroke-width="3"/>`)
+      parts.push(`<path d="${ellipsePath(o.cx, o.cy, o.rx, o.ry)}" fill="none" stroke="#3f8a5c" stroke-width="3"/>`)
     } else if (o.kind === 'arrow') {
       const g = arrowGeometry(o.from, o.to, o.bend)
-      parts.push(`<path d="${g.d}" fill="none" stroke="#e85d26" stroke-width="3"/><path d="${g.head}" fill="none" stroke="#e85d26" stroke-width="3"/>`)
+      parts.push(`<path d="${g.d}" fill="none" stroke="#3f8a5c" stroke-width="3"/><path d="${g.head}" fill="none" stroke="#3f8a5c" stroke-width="3"/>`)
     } else if (o.kind === 'livelabel') {
       continue // derived from a widget; nothing the model needs to see
     } else if (o.kind === 'widget') {
       parts.push(
-        `<rect x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" rx="8" fill="#fff4ee" stroke="#e85d26" stroke-width="2"/>` +
-          `<text x="${o.x + 14}" y="${o.y + 28}" font-family="sans-serif" font-size="18" font-weight="700" fill="#e85d26">${esc(o.title)} (${o.widget.type} widget)</text>`,
+        `<rect x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" rx="8" fill="#e8f2e4" stroke="#3f8a5c" stroke-width="2"/>` +
+          `<text x="${o.x + 14}" y="${o.y + 28}" font-family="sans-serif" font-size="18" font-weight="700" fill="#3f8a5c">${esc(o.title)} (${o.widget.type} widget)</text>`,
       )
     } else {
       parts.push(
-        `<rect x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" rx="8" fill="#fff4ee" stroke="#e85d26" stroke-width="2"/>` +
-          `<text x="${o.x + 14}" y="${o.y + 28}" font-family="sans-serif" font-size="18" font-weight="700" fill="#e85d26">${esc(o.title)}</text>`,
+        `<rect x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" rx="8" fill="#e8f2e4" stroke="#3f8a5c" stroke-width="2"/>` +
+          `<text x="${o.x + 14}" y="${o.y + 28}" font-family="sans-serif" font-size="18" font-weight="700" fill="#3f8a5c">${esc(o.title)}</text>`,
       )
     }
   }

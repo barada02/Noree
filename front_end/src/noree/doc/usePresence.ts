@@ -12,7 +12,7 @@ export type Peer = {
   selected: string[];
 };
 
-const COLORS = ["#c2410c", "#0f766e", "#7c3aed", "#be123c", "#1d4ed8", "#a16207", "#15803d", "#a21caf"];
+const COLORS = ["#2f7d5b", "#3b6ea5", "#7b5ea7", "#a34a5f", "#6b7f23", "#1f7a85", "#4f5fb0", "#4a5568"];
 const CURSOR_INTERVAL_MS = 40;
 
 function colorFor(id: string) {

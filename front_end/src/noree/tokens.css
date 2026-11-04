@@ -1,0 +1,77 @@
+/* The product's design tokens: a warm paper base, deep moss ink and one leaf-green accent.
+   Imported by index.css so Tailwind can turn them into utilities such as bg-n-surface and text-n-ink.
+   The experiment pages keep their own look. */
+:root {
+  --n-bg: #f4f1e6;
+  --n-rail: #ece8da;
+  --n-surface: #fdfcf7;
+  --n-sunken: #e8e4d5;
+  --n-line: #d9d3bf;
+  --n-line-soft: #e5e0cf;
+  --n-ink: #1e2b24;
+  --n-ink-2: #4f5e55;
+  --n-ink-3: #6b7a70;
+  --n-moss: #26503c;
+  --n-moss-hover: #1d4230;
+  --n-on-moss: #f5f3e8;
+  --n-leaf: #3f8a5c;
+  --n-leaf-soft: #dfecdc;
+  --n-leaf-ring: rgb(63 138 92 / 0.32);
+  --n-butter: #f0db8a;
+  --n-butter-ink: #4a3f12;
+  --n-sky: #d3e3e9;
+  --n-sky-ink: #2a4a57;
+  --n-danger: #a6372d;
+  --n-danger-soft: #f4dad5;
+  --n-shadow-1: 0 1px 2px rgb(31 43 36 / 0.06), 0 4px 14px -6px rgb(31 43 36 / 0.14);
+  --n-shadow-2: 0 2px 4px rgb(31 43 36 / 0.06), 0 18px 40px -16px rgb(31 43 36 / 0.28);
+}
+
+.dark {
+  --n-bg: #0f1a15;
+  --n-rail: #0b130f;
+  --n-surface: #16241d;
+  --n-sunken: #1d2d25;
+  --n-line: #2c3f34;
+  --n-line-soft: #22332a;
+  --n-ink: #e7eee3;
+  --n-ink-2: #a9b8ad;
+  --n-ink-3: #86978b;
+  --n-moss: #a8d5b3;
+  --n-moss-hover: #c0e4c8;
+  --n-on-moss: #0f1a15;
+  --n-leaf: #7cc393;
+  --n-leaf-soft: #1f3529;
+  --n-leaf-ring: rgb(124 195 147 / 0.38);
+  --n-sky: #20363f;
+  --n-sky-ink: #bfd9e3;
+  --n-danger: #e58a7e;
+  --n-danger-soft: #3a1f1b;
+  --n-shadow-1: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 14px -6px rgb(0 0 0 / 0.5);
+  --n-shadow-2: 0 2px 4px rgb(0 0 0 / 0.3), 0 18px 40px -16px rgb(0 0 0 / 0.7);
+}
+
+@theme inline {
+  --color-n-bg: var(--n-bg);
+  --color-n-rail: var(--n-rail);
+  --color-n-surface: var(--n-surface);
+  --color-n-sunken: var(--n-sunken);
+  --color-n-line: var(--n-line);
+  --color-n-line-soft: var(--n-line-soft);
+  --color-n-ink: var(--n-ink);
+  --color-n-ink-2: var(--n-ink-2);
+  --color-n-ink-3: var(--n-ink-3);
+  --color-n-moss: var(--n-moss);
+  --color-n-on-moss: var(--n-on-moss);
+  --color-n-leaf: var(--n-leaf);
+  --color-n-leaf-soft: var(--n-leaf-soft);
+  --color-n-butter: var(--n-butter);
+  --color-n-butter-ink: var(--n-butter-ink);
+  --color-n-sky: var(--n-sky);
+  --color-n-sky-ink: var(--n-sky-ink);
+  --color-n-danger: var(--n-danger);
+  --color-n-danger-soft: var(--n-danger-soft);
+  --font-display: "Fraunces Variable", Georgia, "Times New Roman", serif;
+  --font-ui: "Figtree Variable", system-ui, "Segoe UI", sans-serif;
+  --font-hand: "Caveat Variable", "Segoe Print", "Bradley Hand", cursive;
+}

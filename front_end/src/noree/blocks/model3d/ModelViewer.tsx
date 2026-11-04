@@ -9,7 +9,7 @@ const THREE_VERSION = "0.187.0";
  */
 function pageFor(code: string) {
   const safeCode = code.replace(/<\/script/gi, "<\\/script");
-  const context = JSON.stringify({ viewport: { width: 800, height: 600 }, theme: { background: "#0c0c0d", accent: "#e85d26" }, params: {}, scene: [], perfTier: "high" });
+  const context = JSON.stringify({ viewport: { width: 800, height: 600 }, theme: { background: "#0c0c0d", accent: "#3f8a5c" }, params: {}, scene: [], perfTier: "high" });
   return `<!doctype html>
 <html><head><meta charset="utf-8">
 <script type="importmap">
@@ -65,7 +65,7 @@ export function ModelViewer({ codeAsset }: { codeAsset: string }) {
     return <p className="flex h-full items-center justify-center p-4 text-center text-sm text-stone-300">This model couldn't be loaded. Check your connection and reopen it.</p>;
   }
   if (!srcDoc) {
-    return <p className="flex h-full items-center justify-center font-mono text-xs tracking-widest text-stone-400 uppercase">Loading model</p>;
+    return <p className="flex h-full items-center justify-center font-mono text-xs tracking-widest text-n-ink-3 uppercase">Loading model</p>;
   }
   // The key restarts the scene when switching versions.
   return <iframe key={codeAsset} title="Generated 3D model" sandbox="allow-scripts" srcDoc={srcDoc} data-model-viewer className="h-full w-full border-0" />;

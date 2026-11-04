@@ -276,6 +276,11 @@ describe('main agent', () => {
       expect(parts().content.get(model3d.id)!.get('prompt')).toBe('a rocket');
       expect([...parts().edges.values()].map(readEdge)).toMatchObject([{ source: note.id, target: model3d.id }]);
 
+      // The frame was fitted to what's in it, not left at its starting size.
+      expect(frame.w).toBeLessThan(640);
+      expect(note.x + note.w).toBeLessThanOrEqual(frame.w);
+      expect(model3d.y + model3d.h).toBeLessThanOrEqual(frame.h);
+
       // A brand-new reader, after the document was saved, gets the same board.
       client.destroy();
       await settle();

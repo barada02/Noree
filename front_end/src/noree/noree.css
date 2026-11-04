@@ -1,0 +1,458 @@
+/* The product's look, shared by the app and the landing page. Tokens are in tokens.css.
+   Everything is scoped to .noree-app and .noree-site, so the experiment pages are untouched. */
+
+@layer components {
+.noree-app,
+.noree-site {
+  font-family: var(--font-ui);
+  color: var(--n-ink);
+  background: var(--n-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+.noree-app *,
+.noree-site * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--n-line) transparent;
+}
+
+.n-display {
+  font-family: var(--font-display);
+  font-weight: 540;
+  font-variation-settings: "SOFT" 70;
+  letter-spacing: -0.012em;
+}
+.n-hand {
+  font-family: var(--font-hand);
+  font-weight: 500;
+}
+.n-eyebrow {
+  font-size: 11.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--n-ink-3);
+  font-weight: 650;
+}
+
+:where(.noree-app, .noree-site) :focus-visible {
+  outline: 2px solid var(--n-leaf);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+:where(.noree-app, .noree-site) ::selection {
+  background: var(--n-leaf-ring);
+}
+
+/* ---------- Buttons and fields ---------- */
+.n-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 2.25rem;
+  padding: 0 0.95rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font: 600 14px/1 var(--font-ui);
+  color: var(--n-ink);
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s,
+    transform 0.15s;
+}
+.n-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.n-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.n-btn svg {
+  width: 1.1em;
+  height: 1.1em;
+  flex-shrink: 0;
+}
+.n-btn--primary {
+  background: var(--n-moss);
+  color: var(--n-on-moss);
+}
+.n-btn--primary:hover:not(:disabled) {
+  background: var(--n-moss-hover);
+}
+.n-btn--soft {
+  background: var(--n-sunken);
+}
+.n-btn--soft:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--n-sunken) 70%, var(--n-line));
+}
+.n-btn--outline {
+  border-color: var(--n-line);
+  background: var(--n-surface);
+}
+.n-btn--outline:hover:not(:disabled) {
+  border-color: var(--n-ink-3);
+}
+.n-btn--ghost:hover:not(:disabled) {
+  background: var(--n-sunken);
+}
+.n-btn--danger {
+  background: var(--n-danger-soft);
+  color: var(--n-danger);
+}
+.n-btn--sm {
+  height: 2rem;
+  padding: 0 0.75rem;
+  font-size: 13px;
+}
+.n-btn--lg {
+  height: 3rem;
+  padding: 0 1.5rem;
+  font-size: 15px;
+}
+.n-btn--icon {
+  width: 2.1rem;
+  padding: 0;
+}
+.n-btn--sm.n-btn--icon {
+  width: 2rem;
+}
+.n-btn[aria-pressed="true"].n-btn--outline {
+  background: var(--n-leaf-soft);
+  border-color: var(--n-leaf);
+  color: var(--n-moss);
+}
+
+.n-field {
+  width: 100%;
+  border: 1px solid var(--n-line);
+  background: var(--n-surface);
+  border-radius: 14px;
+  padding: 0.6rem 0.8rem;
+  font: 400 14px/1.45 var(--font-ui);
+  color: var(--n-ink);
+  outline: none;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.n-field::placeholder {
+  color: var(--n-ink-3);
+}
+.n-field:focus {
+  border-color: var(--n-leaf);
+  box-shadow: 0 0 0 3px var(--n-leaf-ring);
+}
+
+.n-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 1.5rem;
+  padding: 0 0.6rem;
+  border-radius: 999px;
+  font: 650 11.5px/1 var(--font-ui);
+  background: var(--n-leaf-soft);
+  color: var(--n-moss);
+}
+.n-chip--warn {
+  background: color-mix(in srgb, var(--n-butter) 55%, transparent);
+  color: var(--n-butter-ink);
+}
+.dark .n-chip--warn {
+  color: var(--n-butter);
+  background: color-mix(in srgb, var(--n-butter) 16%, transparent);
+}
+.n-chip--sky {
+  background: var(--n-sky);
+  color: var(--n-sky-ink);
+}
+
+.n-panel {
+  background: var(--n-surface);
+  border: 1px solid var(--n-line-soft);
+  border-radius: 20px;
+  box-shadow: var(--n-shadow-1);
+}
+.n-float {
+  background: color-mix(in srgb, var(--n-surface) 90%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--n-line-soft);
+  box-shadow: var(--n-shadow-2);
+}
+.n-seg {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: 999px;
+  background: var(--n-sunken);
+}
+.n-seg button {
+  height: 28px;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  font: 600 13px/1 var(--font-ui);
+  color: var(--n-ink-2);
+  transition:
+    background 0.15s,
+    color 0.15s;
+  text-transform: capitalize;
+}
+.n-seg button[aria-pressed="true"] {
+  background: var(--n-surface);
+  color: var(--n-ink);
+  box-shadow: var(--n-shadow-1);
+}
+
+@keyframes n-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+.n-rise {
+  animation: n-rise 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes n-breathe {
+  50% {
+    opacity: 0.45;
+  }
+}
+.n-breathe {
+  animation: n-breathe 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .n-rise,
+  .n-breathe {
+    animation: none;
+  }
+  .n-btn,
+  .n-block {
+    transition: none;
+  }
+}
+
+/* ---------- Blocks on the board ---------- */
+.n-block {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--n-surface);
+  border: 1px solid var(--n-line);
+  box-shadow: var(--n-shadow-1);
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s;
+}
+.react-flow__node:hover .n-block {
+  box-shadow: var(--n-shadow-2);
+}
+.n-block[data-selected="true"] {
+  border-color: var(--n-moss);
+  box-shadow:
+    0 0 0 2px var(--n-moss),
+    var(--n-shadow-2);
+}
+.n-block__head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.75rem;
+  min-height: 2.6rem;
+  border-bottom: 1px solid var(--n-line-soft);
+}
+.n-block__icon {
+  display: grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 9px;
+  flex-shrink: 0;
+  background: var(--n-sunken);
+  color: var(--n-ink-2);
+}
+.n-block__icon svg {
+  width: 15px;
+  height: 15px;
+}
+.n-block__title {
+  font: 600 14px/1.2 var(--font-ui);
+  min-width: 0;
+}
+.n-block__meta {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  font: 600 11px/1 var(--font-ui);
+  color: var(--n-ink-3);
+}
+.n-block[data-block-type="slate"] .n-block__icon {
+  background: var(--n-leaf-soft);
+  color: var(--n-moss);
+}
+.n-block[data-block-type="model3d"] .n-block__icon {
+  background: var(--n-sky);
+  color: var(--n-sky-ink);
+}
+.n-block[data-block-type="sticky"] {
+  background: var(--n-butter);
+  color: var(--n-butter-ink);
+  border-color: color-mix(in srgb, var(--n-butter-ink) 20%, transparent);
+}
+.n-block[data-block-type="sticky"] .n-block__head {
+  border-color: color-mix(in srgb, var(--n-butter-ink) 14%, transparent);
+}
+.n-block[data-block-type="sticky"] .n-block__icon {
+  background: color-mix(in srgb, var(--n-butter-ink) 12%, transparent);
+  color: var(--n-butter-ink);
+}
+.n-block[data-block-type="sticky"] .n-block__meta {
+  color: color-mix(in srgb, var(--n-butter-ink) 70%, transparent);
+}
+
+.n-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 28px;
+  border: 1.5px dashed color-mix(in srgb, var(--n-moss) 30%, transparent);
+  background: color-mix(in srgb, var(--n-leaf) 6%, transparent);
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+.n-frame[data-hover="true"] {
+  background: color-mix(in srgb, var(--n-leaf) 16%, transparent);
+  border-style: solid;
+  border-color: var(--n-leaf);
+}
+.n-frame[data-selected="true"] {
+  border-style: solid;
+  border-color: var(--n-moss);
+}
+.n-frame__title {
+  position: absolute;
+  top: -2.2rem;
+  left: 0.5rem;
+  max-width: 100%;
+  display: flex;
+  color: var(--n-moss);
+  font-size: 17px;
+}
+
+/* The dock that floats over the board */
+.n-dock {
+  position: absolute;
+  left: 50%;
+  bottom: 1.25rem;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  gap: 2px;
+  padding: 6px;
+  border-radius: 24px;
+}
+.n-dock button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 16px;
+  color: var(--n-ink-2);
+  font: 650 10.5px/1 var(--font-ui);
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.n-dock button svg {
+  width: 20px;
+  height: 20px;
+}
+.n-dock button:hover {
+  background: var(--n-leaf-soft);
+  color: var(--n-moss);
+}
+
+} /* end of the components layer */
+
+/* ---------- React Flow, restyled ----------
+   Unlayered on purpose: React Flow's stylesheet is unlayered, and layered rules always lose to unlayered ones. */
+.noree-app .react-flow,
+.noree-app .react-flow.dark {
+  --xy-background-color-default: var(--n-bg);
+  --xy-background-pattern-dots-color-default: color-mix(in srgb, var(--n-ink) 16%, transparent);
+  --xy-edge-stroke-default: var(--n-leaf);
+  --xy-edge-stroke-width-default: 2;
+  --xy-edge-stroke-selected-default: var(--n-moss);
+  --xy-selection-background-color-default: color-mix(in srgb, var(--n-leaf) 12%, transparent);
+  --xy-selection-border-default: 1px solid var(--n-leaf);
+  --xy-minimap-background-color-default: var(--n-surface);
+  --xy-minimap-mask-background-color-default: color-mix(in srgb, var(--n-bg) 70%, transparent);
+  --xy-minimap-node-background-color-default: var(--n-line);
+  --xy-controls-button-background-color-default: var(--n-surface);
+  --xy-controls-button-background-color-hover-default: var(--n-leaf-soft);
+  --xy-controls-button-color-default: var(--n-ink-2);
+  --xy-controls-button-border-color-default: var(--n-line-soft);
+}
+.noree-app .react-flow__controls {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--n-line-soft);
+  box-shadow: var(--n-shadow-1);
+}
+.noree-app .react-flow__minimap {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--n-line-soft);
+  box-shadow: var(--n-shadow-1);
+}
+.noree-app .react-flow__attribution {
+  background: transparent;
+  opacity: 0.55;
+  font-size: 10px;
+}
+.noree-app .react-flow__handle {
+  width: 12px;
+  height: 12px;
+  background: var(--n-surface);
+  border: 2px solid var(--n-leaf);
+  opacity: 0.55;
+  transition:
+    opacity 0.15s,
+    background 0.15s,
+    transform 0.15s;
+}
+.noree-app .react-flow__node:hover .react-flow__handle,
+.noree-app .react-flow__node.selected .react-flow__handle,
+.noree-app .react-flow__handle.connectingto,
+.noree-app .react-flow__handle:hover {
+  opacity: 1;
+  background: var(--n-leaf);
+}
+.noree-app .react-flow__handle:hover {
+  transform: scale(1.25);
+}
+.noree-app .react-flow__resize-control.handle {
+  background: var(--n-surface);
+  border: 2px solid var(--n-moss);
+  border-radius: 4px;
+  width: 9px;
+  height: 9px;
+}
+.noree-app .react-flow__resize-control.line {
+  border-color: var(--n-moss);
+}
+.noree-app .react-flow__edge-path {
+  stroke-linecap: round;
+}
