@@ -1,7 +1,7 @@
 import type { DirectConnection } from '@hocuspocus/server';
-import { createHash } from 'node:crypto';
 import * as Y from 'yjs';
-import { docParts, readEdge, readLayout, type BlockType, type Model3dVersion, type PageItem } from '../shared/schema.js';
+import { incomingSources } from '../shared/fingerprint.js';
+import { docParts, readLayout, type BlockType, type Model3dVersion, type PageItem } from '../shared/schema.js';
 
 export const MAX_SOURCE_CHARS = 6000;
 export const MAX_IMAGES = 3;
@@ -14,47 +14,26 @@ export type BlockContext = {
   text: string;
   /** Asset URLs. */
   images: string[];
-  /** Changes when the block's content changes. Generated results use it to tell when they're out of date. */
-  fingerprint: string;
 };
 
 /** Reads one Slate page's snapshot as text. Null means it couldn't be read this time. */
 export type Transcriber = (assetUrl: string) => Promise<string | null>;
 
-/** A connection means the target reads from the source. Reaches one step only, to stay predictable. */
-export function incomingSources(doc: Y.Doc, blockId: string): string[] {
-  const { edges, blocks } = docParts(doc);
-  const sources: string[] = [];
-  edges.forEach((edge) => {
-    const { source, target } = readEdge(edge);
-    if (target === blockId && blocks.has(source)) sources.push(source);
-  });
-  return sources;
-}
-
-const hash = (value: string) => createHash('sha256').update(value).digest('hex').slice(0, 24);
-
 function clip(text: string): string {
   return text.length > MAX_SOURCE_CHARS ? `${text.slice(0, MAX_SOURCE_CHARS)}\n[cut off here]` : text;
 }
 
-async function readSlate(
-  connection: DirectConnection,
-  content: Y.Map<unknown>,
-  transcribe: Transcriber,
-): Promise<{ text: string; images: string[]; fingerprintInput: string }> {
+async function readSlate(connection: DirectConnection, content: Y.Map<unknown>, transcribe: Transcriber): Promise<{ text: string; images: string[] }> {
   const pages = (content.get('pages') as Y.Array<Y.Map<unknown>>).toArray();
   const currentId = content.get('currentPageId');
   // The current page matters most, so it's first when the limits apply.
   const ordered = [...pages].sort((a, b) => Number(b.get('id') === currentId) - Number(a.get('id') === currentId));
   const parts: string[] = [];
   const images: string[] = [];
-  const fingerprints: string[] = [];
 
   for (const page of ordered.slice(0, MAX_TRANSCRIBED_PAGES)) {
     const number = pages.indexOf(page) + 1;
     const asset = page.get('snapshotAsset') as string | null;
-    fingerprints.push(asset ?? 'empty');
     if (!asset) continue;
     images.push(asset);
 
@@ -77,11 +56,7 @@ async function readSlate(
       parts.push(`Page ${number}: could not be read as text this time.${pasted.length ? ` Pasted text: ${pasted.join(' / ')}` : ''}`);
     }
   }
-  return {
-    text: parts.join('\n\n') || 'This Slate is empty.',
-    images,
-    fingerprintInput: fingerprints.join(','),
-  };
+  return { text: parts.join('\n\n') || 'This Slate is empty.', images };
 }
 
 async function readBlock(connection: DirectConnection, doc: Y.Doc, blockId: string, transcribe: Transcriber): Promise<BlockContext | null> {
@@ -92,26 +67,22 @@ async function readBlock(connection: DirectConnection, doc: Y.Doc, blockId: stri
   const blockContent = content.get(blockId);
   let text = '';
   let images: string[] = [];
-  let fingerprintInput = '';
 
   if (type === 'text' || type === 'sticky') {
     text = String(blockContent?.get('text') ?? '');
-    fingerprintInput = text;
   } else if (type === 'slate' && blockContent) {
     const slate = await readSlate(connection, blockContent, transcribe);
     text = slate.text;
     images = slate.images;
-    fingerprintInput = slate.fingerprintInput;
   } else if (type === 'model3d' && blockContent) {
     const prompt = String(blockContent.get('prompt') ?? '');
     const versions = (blockContent.get('versions') as Y.Array<Model3dVersion>).toArray();
     const current = versions.find((v) => v.id === blockContent.get('currentVersionId'));
-    text = current ? `A 3D model generated from this prompt: ${prompt}` : `A 3D model not generated yet. Prompt: ${prompt || '(none)'}`;
+    text = current ? `A generated 3D model. Description: ${current.brief ?? prompt}` : `A 3D model not generated yet. Prompt: ${prompt || '(none)'}`;
     if (current?.previewAsset) images = [current.previewAsset];
-    fingerprintInput = `${prompt}|${current?.id ?? ''}`;
   }
 
-  return { blockId, type, title, text: clip(text), images, fingerprint: hash(`${type}|${fingerprintInput}`) };
+  return { blockId, type, title, text: clip(text), images };
 }
 
 /** The live document behind a connection, through its public API. */
@@ -133,7 +104,7 @@ export async function collectContext(connection: DirectConnection, blockId: stri
     const source = await readBlock(connection, doc, sourceId, transcribe);
     if (source) sources.push(source);
   }
-  // Images are expensive, so sources come before the block's own and the total is capped.
+  // Sources come before the block's own, and the total is capped.
   let remaining = MAX_IMAGES;
   const limit = (context: BlockContext | null) => {
     if (!context) return;
@@ -145,7 +116,3 @@ export async function collectContext(connection: DirectConnection, blockId: stri
   return { own, sources };
 }
 
-/** Combined fingerprint of a set of contexts, independent of connection order. */
-export function combinedFingerprint(contexts: BlockContext[], extra = ''): string {
-  return hash(`${[...contexts.map((c) => c.fingerprint)].sort().join(',')}|${extra}`);
-}

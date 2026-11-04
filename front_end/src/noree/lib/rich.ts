@@ -1,4 +1,5 @@
 import katex from 'katex'
+import { repairLatex } from '../../shared/latex.js'
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
@@ -12,7 +13,7 @@ export function renderRich(text: string): string {
   const normalised = text.replace(/\\\(([\s\S]+?)\\\)/g, '$$$1$$').replace(/\\\[([\s\S]+?)\\\]/g, '$$$$$1$$$$')
   const withTokens = normalised.replace(/\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g, (_m, display: string | undefined, inline: string | undefined) => {
     const src = display ?? inline ?? ''
-    math.push(katex.renderToString(src, { throwOnError: false, displayMode: display !== undefined }))
+    math.push(katex.renderToString(repairLatex(src), { throwOnError: false, displayMode: display !== undefined }))
     return `\u0000${math.length - 1}\u0000`
   })
   const html = esc(withTokens)

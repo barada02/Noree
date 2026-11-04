@@ -13,7 +13,7 @@ export function ProjectSidebar({ activeId, children }: Props) {
   useEffect(() => onProjectsChanged(() => setProjects(recentProjects())), []);
 
   return (
-    <aside className="flex h-full w-60 shrink-0 flex-col border-r border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-950">
+    <aside className="hidden h-full w-60 shrink-0 flex-col md:flex border-r border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-950">
       <div className="flex items-center justify-between px-4 py-3">
         <a href="#/" className="text-base font-semibold tracking-tight">
           Noree

@@ -8,7 +8,8 @@ import { uploadAsset, startSlateRun, cancelJob } from "../../lib/api";
 import { makeSnapshot } from "../../lib/snapshot";
 import { JobTrace } from "./JobTrace";
 import { SlatePageCanvas, type Tool } from "./SlatePageCanvas";
-import { isStale, slateHandles, useBlockJobs, useCurrentPage, usePageContents } from "./useSlate";
+import { isStale, useBlockJobs } from "../../doc/useJobs";
+import { slateHandles, useCurrentPage, usePageContents } from "./useSlate";
 import { WidgetStateProvider } from "./widgetState";
 
 const MAX_PASTE_WIDTH = 640;

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import * as Y from "yjs";
 import { docParts, readLayout, type BlockType } from "../shared/schema.js";
 import { BLOCK_BY_TYPE, BLOCKS } from "./blocks/registry";
+import { Model3dFocus } from "./blocks/model3d/Model3dFocus";
 import { SlateFocus } from "./blocks/slate/SlateFocus";
 import { BoardCanvas } from "./board/BoardCanvas";
 import { localActor } from "./doc/actor";
@@ -15,7 +16,8 @@ import { useYValue } from "./doc/useY";
 import { AiPanel } from "./shell/AiPanel";
 import { Notice } from "./shell/Notice";
 import { ProjectSidebar } from "./shell/ProjectSidebar";
-import { TopBar } from "./shell/TopBar";
+import { TopBar, type BoardMode } from "./shell/TopBar";
+import { ReadView } from "./read/ReadView";
 
 function BlockMenu({ onAdd }: { onAdd: (type: BlockType) => void }) {
   return (
@@ -89,8 +91,12 @@ function Workspace({ doc, provider, status, projectId }: WorkspaceProps) {
   const flow = useReactFlow<BoardNode>();
   const empty = board.nodes.length === 0;
   const [focusId, setFocusId] = useState<string | null>(null);
+  const [mode, setMode] = useState<BoardMode>("board");
+  // Open where there's room for it. On smaller screens it's one tap away.
+  const [panelOpen, setPanelOpen] = useState(() => window.innerWidth >= 1024);
   // The block may be deleted by someone else while it is open.
-  const focused = focusId !== null && board.nodes.some((n) => n.id === focusId) ? focusId : null;
+  const focusedNode = focusId !== null ? board.nodes.find((n) => n.id === focusId) : undefined;
+  const focused = focusedNode ? focusedNode.id : null;
   const selectedKey = board.nodes.filter((n) => n.selected).map((n) => n.id).join(",");
   const selectedIds = useMemo(() => (selectedKey ? selectedKey.split(",") : []), [selectedKey]);
 
@@ -110,16 +116,18 @@ function Workspace({ doc, provider, status, projectId }: WorkspaceProps) {
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-stone-50 text-stone-900 dark:bg-black dark:text-stone-100">
       {/* While a block is open full screen, keyboard and screen readers stay inside it. */}
-      <div inert={focused !== null} className="flex h-full min-w-0 flex-1">
+      <div inert={focused !== null} className="relative flex h-full min-w-0 flex-1">
       <ProjectSidebar activeId={projectId}>
         <FrameList doc={doc} act={board.act} />
       </ProjectSidebar>
-      <BlockMenu onAdd={add} />
+      {mode === "board" && <BlockMenu onAdd={add} />}
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar doc={doc} projectId={projectId} status={status} presence={presence} undo={undo} />
+        <TopBar doc={doc} mode={mode} onModeChange={setMode} panelOpen={panelOpen} onTogglePanel={() => setPanelOpen((open) => !open)} projectId={projectId} status={status} presence={presence} undo={undo} />
         <main className="relative min-h-0 flex-1">
           <BoardCanvas
             doc={doc}
+            projectId={projectId}
+            actor={actor}
             board={board}
             presence={presence}
             onDragStart={undo.newStep}
@@ -128,17 +136,21 @@ function Workspace({ doc, provider, status, projectId }: WorkspaceProps) {
               if (BLOCK_BY_TYPE[type].hasFocus) setFocusId(id);
             }}
           />
-          {empty && (
+          {mode === "read" && <ReadView doc={doc} />}
+          {empty && mode === "board" && (
             <p className="pointer-events-none absolute inset-x-0 top-1/3 text-center text-sm text-stone-500">
               Add a block from the menu on the left to start.
             </p>
           )}
         </main>
       </div>
-      <AiPanel doc={doc} projectId={projectId} selectedIds={selectedIds} actor={actor} personName={presence.name} />
+      {mode === "board" && panelOpen && <AiPanel doc={doc} projectId={projectId} selectedIds={selectedIds} actor={actor} personName={presence.name} />}
       </div>
-      {focused && (
+      {focused && focusedNode?.data.blockType === "slate" && (
         <SlateFocus doc={doc} id={focused} projectId={projectId} actor={actor} personName={presence.name} undo={undo} onClose={() => setFocusId(null)} />
+      )}
+      {focused && focusedNode?.data.blockType === "model3d" && (
+        <Model3dFocus doc={doc} id={focused} projectId={projectId} actor={actor} personName={presence.name} onClose={() => setFocusId(null)} />
       )}
     </div>
   );

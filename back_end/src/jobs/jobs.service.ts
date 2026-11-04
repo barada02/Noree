@@ -36,8 +36,21 @@ export class JobsService implements BeforeApplicationShutdown {
   private readonly running = new Map<string, { controller: AbortController; blockKey: string }>();
   private readonly busyBlocks = new Set<string>();
   private recentRuns: number[] = [];
+  private recent3dRuns: number[] = [];
+  /** The 3D service handles one generation at a time well, and they take minutes. */
+  private generating = false;
 
   constructor(private readonly collab: CollabService) {}
+
+  private check3dLimits() {
+    if (this.generating) throw new ConflictException('Another 3D model is being generated. Try again in a few minutes.');
+    const now = Date.now();
+    const limit = Number(process.env.GEN3D_MAX_RUNS_PER_HOUR ?? 30);
+    this.recent3dRuns = this.recent3dRuns.filter((t) => now - t < HOUR_MS);
+    if (this.recent3dRuns.length >= limit) {
+      throw new HttpException('The 3D limit for this hour has been reached. Try again later.', HttpStatus.TOO_MANY_REQUESTS);
+    }
+  }
 
   private checkLimits(blockKey: string) {
     if (process.env.AI_ENABLED === 'false') throw new ServiceUnavailableException('AI is turned off on this server right now.');
@@ -53,7 +66,13 @@ export class JobsService implements BeforeApplicationShutdown {
 
   start(request: JobRequest, work: (context: JobContext) => Promise<void>): { jobId: string } {
     const blockKey = `${request.projectId}:${request.blockId}`;
+    const is3d = request.kind === 'generate-3d';
+    if (is3d) this.check3dLimits();
     this.checkLimits(blockKey);
+    if (is3d) {
+      this.generating = true;
+      this.recent3dRuns.push(Date.now());
+    }
     const jobId = newId();
     const controller = new AbortController();
     this.busyBlocks.add(blockKey);
@@ -61,6 +80,7 @@ export class JobsService implements BeforeApplicationShutdown {
     void this.run(jobId, controller, request, work).finally(() => {
       this.busyBlocks.delete(blockKey);
       this.running.delete(jobId);
+      if (is3d) this.generating = false;
     });
     return { jobId };
   }

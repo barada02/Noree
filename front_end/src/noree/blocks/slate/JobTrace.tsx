@@ -1,4 +1,4 @@
-import { isStale, type JobView } from "./useSlate";
+import { isStale, type JobView } from "../../doc/useJobs";
 
 const STATUS_COLOR: Record<string, string> = {
   pass: "text-emerald-700 dark:text-emerald-400",

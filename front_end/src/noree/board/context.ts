@@ -1,8 +1,12 @@
 import { createContext, useContext } from "react";
 import * as Y from "yjs";
+import type { ActorRef } from "../../shared/schema.js";
 
 export type BoardContextValue = {
   doc: Y.Doc;
+  projectId: string;
+  actor: ActorRef;
+  personName: string;
   act: (action: unknown) => { id?: string };
   /** The frame a dragged block would land in, so it can be highlighted. */
   hoverFrameId: string | null;

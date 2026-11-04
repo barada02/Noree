@@ -1,6 +1,7 @@
 import { Handle, NodeResizer, Position, type Node, type NodeProps } from "@xyflow/react";
 import { useState } from "react";
 import { BLOCK_BY_TYPE } from "../blocks/registry";
+import { ErrorBoundary } from "../shell/ErrorBoundary";
 import type { BlockData } from "../doc/useBoard";
 import { useBoardContext } from "./context";
 
@@ -70,7 +71,18 @@ export function BlockNode({ id, data, selected }: Props) {
           </span>
         </header>
         <div className="min-h-0 flex-1">
-          <Preview doc={doc} id={id} />
+          <ErrorBoundary
+            fallback={(reset) => (
+              <div role="alert" className="nodrag flex h-full flex-col items-center justify-center gap-2 p-3 text-center text-xs text-stone-500">
+                <p>This block couldn't be displayed.</p>
+                <button type="button" onClick={reset} className="rounded border border-stone-300 px-2 py-0.5 dark:border-stone-700">
+                  Try again
+                </button>
+              </div>
+            )}
+          >
+            <Preview doc={doc} id={id} />
+          </ErrorBoundary>
         </div>
       </div>
       <Handle type="source" position={Position.Right} className={HANDLE} />
@@ -102,4 +114,3 @@ export function FrameNode({ id, data, selected }: Props) {
   );
 }
 
-export const nodeTypes = { block: BlockNode, frame: FrameNode };

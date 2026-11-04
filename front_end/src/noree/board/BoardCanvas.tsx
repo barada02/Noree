@@ -14,14 +14,16 @@ import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as Y from "yjs";
 import { useTheme } from "../../useTheme";
-import type { BlockType } from "../../shared/schema.js";
+import type { ActorRef, BlockType } from "../../shared/schema.js";
 import type { BoardNode, useBoard } from "../doc/useBoard";
 import type { usePresence } from "../doc/usePresence";
 import { BoardContext } from "./context";
-import { nodeTypes } from "./nodes";
+import { nodeTypes } from "./nodeTypes";
 
 type Props = {
   doc: Y.Doc;
+  projectId: string;
+  actor: ActorRef;
   board: ReturnType<typeof useBoard>;
   presence: ReturnType<typeof usePresence>;
   onDragStart: () => void;
@@ -56,7 +58,7 @@ function PeerCursors({ peers }: { peers: ReturnType<typeof usePresence>["peers"]
   );
 }
 
-export function BoardCanvas({ doc, board, presence, onDragStart, paused, onOpenBlock }: Props) {
+export function BoardCanvas({ doc, projectId, actor, board, presence, onDragStart, paused, onOpenBlock }: Props) {
   const { theme } = useTheme();
   const flow = useReactFlow<BoardNode>();
   const [hoverFrameId, setHoverFrameId] = useState<string | null>(null);
@@ -131,7 +133,11 @@ export function BoardCanvas({ doc, board, presence, onDragStart, paused, onOpenB
     return result;
   }, [edges]);
 
-  const context = useMemo(() => ({ doc, act, hoverFrameId, peerSelections, sourceCounts }), [doc, act, hoverFrameId, peerSelections, sourceCounts]);
+  const personName = presence.name;
+  const context = useMemo(
+    () => ({ doc, projectId, actor, personName, act, hoverFrameId, peerSelections, sourceCounts }),
+    [doc, projectId, actor, personName, act, hoverFrameId, peerSelections, sourceCounts],
+  );
 
   return (
     <BoardContext.Provider value={context}>

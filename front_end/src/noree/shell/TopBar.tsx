@@ -14,7 +14,12 @@ function ProjectTitle({ doc, projectId }: { doc: Y.Doc; projectId: string }) {
   const [draft, setDraft] = useState<string | null>(null);
 
   useEffect(() => {
-    if (title) rememberProject(projectId, title);
+    if (!title) return;
+    rememberProject(projectId, title);
+    document.title = `${title} · Noree`;
+    return () => {
+      document.title = "Noree";
+    };
   }, [title, projectId]);
 
   const commit = () => {
@@ -31,7 +36,7 @@ function ProjectTitle({ doc, projectId }: { doc: Y.Doc; projectId: string }) {
       onKeyDown={(e) => {
         if (e.key === "Enter") e.currentTarget.blur();
       }}
-      className="w-64 max-w-full rounded bg-transparent px-1 py-0.5 text-sm font-medium outline-none hover:bg-stone-100 focus:bg-stone-100 dark:hover:bg-stone-800 dark:focus:bg-stone-800"
+      className="w-64 min-w-16 shrink rounded bg-transparent px-1 py-0.5 text-sm font-medium outline-none hover:bg-stone-100 focus:bg-stone-100 dark:hover:bg-stone-800 dark:focus:bg-stone-800"
     />
   );
 }
@@ -43,9 +48,9 @@ function ConnectionStatus({ status }: { status: WebSocketStatus }) {
     [WebSocketStatus.Disconnected]: { label: "Offline, saving here", dot: "bg-red-600" },
   }[status];
   return (
-    <span data-connection={status} className="flex items-center gap-1.5 text-xs text-stone-500">
+    <span data-connection={status} title={view.label} className="flex items-center gap-1.5 text-xs text-stone-500">
       <span className={`h-1.5 w-1.5 rounded-full ${view.dot}`} />
-      {view.label}
+      <span className="hidden xl:inline">{view.label}</span>
     </span>
   );
 }
@@ -78,8 +83,14 @@ function ShareButton() {
   );
 }
 
+export type BoardMode = "board" | "read";
+
 type Props = {
   doc: Y.Doc;
+  mode: BoardMode;
+  onModeChange: (mode: BoardMode) => void;
+  panelOpen: boolean;
+  onTogglePanel: () => void;
   projectId: string;
   status: WebSocketStatus;
   presence: ReturnType<typeof usePresence>;
@@ -88,9 +99,12 @@ type Props = {
 
 const ICON_BUTTON = "rounded px-1.5 py-0.5 text-sm text-stone-600 hover:bg-stone-100 disabled:opacity-30 dark:text-stone-300 dark:hover:bg-stone-800";
 
-export function TopBar({ doc, projectId, status, presence, undo }: Props) {
+export function TopBar({ doc, mode, onModeChange, panelOpen, onTogglePanel, projectId, status, presence, undo }: Props) {
   return (
-    <header className="flex h-11 shrink-0 items-center gap-3 border-b border-stone-200 bg-white px-3 dark:border-stone-800 dark:bg-stone-950">
+    <header className="flex h-11 shrink-0 items-center gap-2 border-b border-stone-200 bg-white px-3 lg:gap-3 dark:border-stone-800 dark:bg-stone-950">
+      <a href="#/app" aria-label="All projects" className="text-sm text-stone-500 md:hidden">
+        ←
+      </a>
       <ProjectTitle doc={doc} projectId={projectId} />
       <span className="flex gap-0.5">
         <button type="button" aria-label="Undo" title="Undo your last change (Ctrl+Z)" disabled={!undo.canUndo} onClick={undo.undo} className={ICON_BUTTON}>
@@ -100,7 +114,23 @@ export function TopBar({ doc, projectId, status, presence, undo }: Props) {
           ↷
         </button>
       </span>
-      <span className="ml-auto flex items-center gap-3">
+      <span role="group" aria-label="View" className="flex overflow-hidden rounded-md border border-stone-300 text-xs dark:border-stone-700">
+        {(["board", "read"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            aria-pressed={mode === m}
+            onClick={() => onModeChange(m)}
+            className={`px-2.5 py-1 capitalize ${mode === m ? "bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900" : "hover:bg-stone-100 dark:hover:bg-stone-800"}`}
+          >
+            {m}
+          </button>
+        ))}
+      </span>
+      <a href={`/api/projects/${projectId}/export.md`} download className="rounded-md border border-stone-300 px-2.5 py-1 text-xs hover:bg-stone-100 dark:border-stone-700 dark:hover:bg-stone-800">
+        Export
+      </a>
+      <span className="ml-auto flex shrink-0 items-center gap-2 lg:gap-3">
         <ConnectionStatus status={status} />
         <span className="flex items-center gap-1" aria-label="People on this board">
           {presence.peers.map((p) => (
@@ -109,7 +139,7 @@ export function TopBar({ doc, projectId, status, presence, undo }: Props) {
             </span>
           ))}
         </span>
-        <label className="flex items-center gap-1.5">
+        <label className="hidden items-center gap-1.5 xl:flex">
           <span className="h-2 w-2 rounded-full" style={{ backgroundColor: presence.color }} />
           <span className="sr-only">Your display name</span>
           <input
@@ -123,6 +153,16 @@ export function TopBar({ doc, projectId, status, presence, undo }: Props) {
             className="w-28 rounded bg-transparent px-1 py-0.5 text-xs outline-none hover:bg-stone-100 focus:bg-stone-100 dark:hover:bg-stone-800 dark:focus:bg-stone-800"
           />
         </label>
+        {mode === "board" && (
+          <button
+            type="button"
+            aria-pressed={panelOpen}
+            onClick={onTogglePanel}
+            className={`rounded-md border border-stone-300 px-2.5 py-1 text-xs dark:border-stone-700 ${panelOpen ? "bg-stone-100 dark:bg-stone-800" : ""}`}
+          >
+            AI
+          </button>
+        )}
         <ShareButton />
       </span>
     </header>
