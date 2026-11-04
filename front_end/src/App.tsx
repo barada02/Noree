@@ -14,6 +14,9 @@ const BlockNoteExperiment = lazy(
 const FlowExperiment = lazy(
   () => import("./experiments/reactflow/FlowExperiment"),
 );
+const KonvaExperiment = lazy(
+  () => import("./experiments/konva/KonvaExperiment"),
+);
 
 function routeFromHash(): string {
   return window.location.hash.replace(/^#\/?/, "").split("?")[0];
@@ -73,16 +76,18 @@ function App() {
   return (
     <ThemeProvider>
       <Shell route={route}>
-        {route === "blocknote" || route === "reactflow" ? (
+        {route === "blocknote" || route === "reactflow" || route === "konva" ? (
           <Suspense
             fallback={
               <p className="px-6 py-10 font-mono text-sm text-stone-500">
-                Loading experiment…
+                Loading experiment...
               </p>
             }
           >
             {route === "blocknote" ? (
               <BlockNoteExperiment />
+            ) : route === "konva" ? (
+              <KonvaExperiment />
             ) : (
               <FlowExperiment />
             )}

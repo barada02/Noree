@@ -29,6 +29,15 @@ export const EXPERIMENTS: ExperimentMeta[] = [
     status: "live",
   },
   {
+    id: "konva",
+    title: "Konva canvas",
+    tagline:
+      "2D canvas scene graph with draggable shapes, Transformer resize/rotate, inline text editing and PNG export.",
+    route: "#/konva",
+    tags: ["Konva 10", "react-konva", "canvas", "transformer"],
+    status: "live",
+  },
+  {
     id: "own-block-editor",
     title: "Mini block editor from scratch",
     tagline:
