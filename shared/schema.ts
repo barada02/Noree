@@ -59,7 +59,7 @@ export interface Model3dVersion {
   createdAt: number;
 }
 
-export type JobKind = 'slate-run' | 'generate-3d' | 'chat';
+export type JobKind = 'main' | 'slate-run' | 'generate-3d';
 export type JobStatus = 'running' | 'done' | 'failed' | 'cancelled';
 export interface JobStep {
   title: string;

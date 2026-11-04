@@ -4,14 +4,18 @@ import { docParts, type JobStep } from "../../shared/schema.js";
 
 export type JobView = {
   id: string;
-  kind: "slate-run" | "generate-3d" | "chat";
+  kind: "main" | "slate-run" | "generate-3d";
+  threadId?: string;
+  /** How to reverse a main agent run's board changes. */
+  undo?: { type: string }[];
+  undone?: boolean;
   status: "running" | "done" | "failed" | "cancelled";
   steps: JobStep[];
   error?: string;
   pageId?: string;
   startedAt: number;
   heartbeatAt: number;
-  startedBy?: { name: string };
+  startedBy?: { id?: string; name: string };
 };
 
 const STALE_AFTER_MS = 60_000;
@@ -21,8 +25,7 @@ export function isStale(job: JobView, now: number) {
   return job.status === "running" && now - job.heartbeatAt > STALE_AFTER_MS;
 }
 
-/** This block's runs, newest first. */
-export function useBlockJobs(doc: Y.Doc, blockId: string): JobView[] {
+function useJobsWhere(doc: Y.Doc, field: "blockId" | "threadId", value: string): JobView[] {
   const { jobs } = useMemo(() => docParts(doc), [doc]);
   const [list, setList] = useState<JobView[]>([]);
 
@@ -30,7 +33,7 @@ export function useBlockJobs(doc: Y.Doc, blockId: string): JobView[] {
     const update = () => {
       const next: JobView[] = [];
       jobs.forEach((job) => {
-        if (job.get("blockId") === blockId) next.push(job.toJSON() as JobView);
+        if (job.get(field) === value) next.push(job.toJSON() as JobView);
       });
       next.sort((a, b) => b.startedAt - a.startedAt);
       setList(next);
@@ -38,9 +41,19 @@ export function useBlockJobs(doc: Y.Doc, blockId: string): JobView[] {
     update();
     jobs.observeDeep(update);
     return () => jobs.unobserveDeep(update);
-  }, [jobs, blockId]);
+  }, [jobs, field, value]);
 
   return list;
+}
+
+/** Runs working on this block, newest first. */
+export function useBlockJobs(doc: Y.Doc, blockId: string): JobView[] {
+  return useJobsWhere(doc, "blockId", blockId);
+}
+
+/** Runs that report into this conversation, newest first. */
+export function useThreadJobs(doc: Y.Doc, threadId: string): JobView[] {
+  return useJobsWhere(doc, "threadId", threadId);
 }
 
 /** The newest run and whether it's still going, re-checked while it runs. */

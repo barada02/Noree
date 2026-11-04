@@ -16,3 +16,6 @@ __pycache__/
 .env
 
 modal.txt
+
+# Kept out of the repo
+demo-video-script.md

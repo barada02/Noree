@@ -10,10 +10,11 @@ A shared board where people and AI agents plan together. Each project is one boa
 |---|---|---|
 | **Slate** | Write by hand, paste text or images, across pages | Reads the page, then annotates it with outlines, arrows, explanations and interactive widgets |
 | **3D model** | Write a prompt, or connect other blocks, and press Generate | Writes Three.js, tests it in a Modal sandbox, reviews a screenshot with a vision model, and retries if needed |
-| **Text, Sticky** | Write notes | Answers questions using the note and whatever is connected to it |
+| **Text, Sticky** | Write notes | Reads them as context when you ask, or when something is connected to them |
 | **Frame** | Group blocks | Sets the reading order for the Read view and export |
 
 - **Connections carry context.** A line from A to B means B reads from A. A question or a generation on B uses A's content, including handwriting.
+- **One AI to talk to.** The AI panel is a main agent. It answers questions, builds and connects blocks on the board, and delegates to specialists: the Slate agent and the 3D agent. One Undo reverses a whole run. See [docs/agent-architecture.html](docs/agent-architecture.html).
 - **Multiplayer with no sign-up.** Share the link. You get live cursors, shared edits and per-person undo, built on Yjs.
 - **Agents are participants.** They write into the same shared document as people, so nobody has to refresh to see their work, and closing a tab doesn't stop it.
 - **Read view and Markdown export.** The canvas gives freedom, and frames give order.
@@ -23,7 +24,7 @@ A shared board where people and AI agents plan together. Each project is one boa
 | Use | Default | Fallback |
 |---|---|---|
 | Slate agent (vision and tool calling) | Muse Spark Open, on Baseten | Muse Spark, Meta Model API |
-| Block chat and page transcription | Muse Spark, Meta Model API | Muse Spark Open, on Baseten |
+| Main agent and page transcription | Muse Spark, Meta Model API | Muse Spark Open, on Baseten |
 | 3D brief | Muse Spark, Meta Model API | Muse Spark Open, on Baseten |
 | 3D code and visual review | Muse Spark Open, on Baseten | None |
 
@@ -94,7 +95,7 @@ Browser tests are in [e2e/](e2e/). They drive two real browsers, and some make r
 |---|---|
 | `front_end/src/noree/` | The product: board, blocks, shared-document bindings, AI panel, Read view |
 | `back_end/src/collab/` | Sync server, project storage |
-| `back_end/src/agents/` | Slate agent, block chat, 3D generation, context collection |
+| `back_end/src/agents/` | The shared agent engine, main agent, Slate and 3D specialists, context collection |
 | `back_end/src/jobs/` | Job lifecycle, cancellation and limits |
 | `shared/` | Document schema, action layer, reading order. Copied into both apps by `scripts/sync-shared.mjs` |
 | `services/agent-sandbox/` | The 3D pipeline (Python, FastAPI, Modal) |

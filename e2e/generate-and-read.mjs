@@ -119,8 +119,7 @@ console.log(`      finished in ${Math.round((Date.now() - started) / 1000)}s wit
 check('a version was produced', status === 'approved' || status === 'draft', String(status));
 
 const preview = node(a, 'model3d').locator('img');
-await a.waitForTimeout(500);
-const loaded = await preview.evaluate((img) => img.complete && img.naturalWidth > 0).catch(() => false);
+const loaded = await preview.evaluate((img) => (img.complete && img.naturalWidth > 0) || new Promise((resolve) => { img.onload = () => resolve(img.naturalWidth > 0); img.onerror = () => resolve(false); })).catch(() => false);
 check('preview image shows on the board', loaded);
 await passes('other browser shows the result', b.locator('[data-model-status]').first().waitFor({ timeout: 8000 }));
 if (shots) await a.screenshot({ path: `${shots}/m5-board.png` });

@@ -267,7 +267,7 @@ describe('3D generation', () => {
       app.get(JobsService).start({ projectId, blockId: other, kind: 'generate-3d', startedBy: person }, async () => {}),
     ).toThrow(/Another 3D model/);
     // Other kinds of job aren't held up.
-    const chat = app.get(JobsService).start({ projectId, blockId: other, kind: 'chat', startedBy: person }, async () => {});
+    const chat = app.get(JobsService).start({ projectId, blockId: other, kind: 'slate-run', startedBy: person }, async () => {});
     await finished(chat.jobId);
     await finished(jobId);
     const again = app.get(JobsService).start({ projectId, blockId: other, kind: 'generate-3d', startedBy: person }, async () => {});
