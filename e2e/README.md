@@ -24,7 +24,8 @@ The second argument is an optional folder for screenshots.
 | `board.mjs` | Projects, blocks, frames, connections, surviving a reload | None |
 | `multiplayer.mjs` | Two browsers, cursors, undo, offline merge, server restart | None |
 | `slate.mjs` | Handwriting, pages, pasting, a real agent run. Add `nomodel` as a third argument to skip the run | One Slate run |
-| `chat.mjs` | The AI panel, and answers that use a connected Slate's handwriting | Yes |
+| `chat.mjs` | The AI panel with a block selected, and answers that use a connected Slate's handwriting | Yes |
+| `main-agent.mjs` | Planning a board, Undo, answering, and delegating to both specialists. Also needs `services/agent-sandbox` on port 8000 | Yes, and Modal |
 | `generate-and-read.mjs` | A real 3D generation, live view, out-of-date badge, Read view, export. Also needs `services/agent-sandbox` on port 8000 | Yes, and Modal |
 | `extras.mjs` | Pasting an image, a Slate run on the Meta API, smaller screens | One Slate run |
 | `live.mjs` | Sync through the real site. Set `LIVE_URL` to change the target. Creates a project there | None |

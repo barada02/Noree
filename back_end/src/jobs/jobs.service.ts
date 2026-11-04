@@ -14,7 +14,16 @@ export type JobRequest = {
   startedBy: ActorRef;
   /** Extra fields stored on the job, such as the Slate page it runs on. */
   fields?: Record<string, string>;
+  /** Where its messages go, when that isn't the block's own thread. */
+  threadId?: string;
+  /** Adds no messages, because whoever started it will report the result. */
+  silent?: boolean;
 };
+
+export type JobOutcome = { status: 'done' | 'failed' | 'cancelled'; result?: string; error?: string };
+
+/** Not tied to one block, such as the main agent's. Messages can go here without a block existing. */
+const BOARD_THREAD = 'board';
 
 /** What a running job uses to report. It writes into the shared document, so everyone sees it live. */
 export type JobContext = {
@@ -25,6 +34,10 @@ export type JobContext = {
   addMessage(message: Omit<Message, 'id' | 'createdAt'>): Promise<void>;
   /** Marks the job failed with this message, once its work function returns. */
   fail(message: string): void;
+  /** A short result, which is what a parent agent gets back. */
+  setResult(text: string): void;
+  /** Changes the job's own record in the document. */
+  update(change: (job: Y.Map<unknown>) => void): Promise<void>;
 };
 
 /**
@@ -52,9 +65,11 @@ export class JobsService implements BeforeApplicationShutdown {
     }
   }
 
-  private checkLimits(blockKey: string) {
+  private checkLimits(blockKey: string, kind: JobKind) {
     if (process.env.AI_ENABLED === 'false') throw new ServiceUnavailableException('AI is turned off on this server right now.');
-    if (this.busyBlocks.has(blockKey)) throw new ConflictException('This block already has a run in progress.');
+    if (this.busyBlocks.has(blockKey)) {
+      throw new ConflictException(kind === 'main' ? 'The AI is already working on a request on this board. Try again when it finishes.' : 'This block already has a run in progress.');
+    }
     const now = Date.now();
     const limit = Number(process.env.AI_MAX_RUNS_PER_HOUR ?? 120);
     this.recentRuns = this.recentRuns.filter((t) => now - t < HOUR_MS);
@@ -65,10 +80,16 @@ export class JobsService implements BeforeApplicationShutdown {
   }
 
   start(request: JobRequest, work: (context: JobContext) => Promise<void>): { jobId: string } {
+    const { jobId } = this.startTracked(request, work);
+    return { jobId };
+  }
+
+  /** Also gives back when and how it ended, and stops when `parentSignal` does. How one agent runs another. */
+  startTracked(request: JobRequest, work: (context: JobContext) => Promise<void>, parentSignal?: AbortSignal): { jobId: string; finished: Promise<JobOutcome> } {
     const blockKey = `${request.projectId}:${request.blockId}`;
     const is3d = request.kind === 'generate-3d';
     if (is3d) this.check3dLimits();
-    this.checkLimits(blockKey);
+    this.checkLimits(blockKey, request.kind);
     if (is3d) {
       this.generating = true;
       this.recent3dRuns.push(Date.now());
@@ -77,12 +98,14 @@ export class JobsService implements BeforeApplicationShutdown {
     const controller = new AbortController();
     this.busyBlocks.add(blockKey);
     this.running.set(jobId, { controller, blockKey });
-    void this.run(jobId, controller, request, work).finally(() => {
+    if (parentSignal?.aborted) controller.abort();
+    else parentSignal?.addEventListener('abort', () => controller.abort(), { once: true });
+    const finished = this.run(jobId, controller, request, work).finally(() => {
       this.busyBlocks.delete(blockKey);
       this.running.delete(jobId);
       if (is3d) this.generating = false;
     });
-    return { jobId };
+    return { jobId, finished };
   }
 
   /** Returns false if this job isn't running here. */
@@ -93,10 +116,12 @@ export class JobsService implements BeforeApplicationShutdown {
     return true;
   }
 
-  private async run(jobId: string, controller: AbortController, request: JobRequest, work: (context: JobContext) => Promise<void>) {
+  private async run(jobId: string, controller: AbortController, request: JobRequest, work: (context: JobContext) => Promise<void>): Promise<JobOutcome> {
     let connection: DirectConnection | undefined;
     let heartbeat: ReturnType<typeof setInterval> | undefined;
     let failure: string | null = null;
+    let result: string | undefined;
+    const threadId = request.threadId ?? request.blockId;
     const withJob = async (change: (job: Y.Map<unknown>, doc: Y.Doc) => void) => {
       await connection?.transact((doc) => {
         const job = docParts(doc).jobs.get(jobId);
@@ -110,6 +135,7 @@ export class JobsService implements BeforeApplicationShutdown {
         const job = new Y.Map<unknown>();
         job.set('id', jobId);
         job.set('blockId', request.blockId);
+        job.set('threadId', threadId);
         job.set('kind', request.kind);
         job.set('status', 'running');
         job.set('steps', new Y.Array<JobStep>());
@@ -127,13 +153,14 @@ export class JobsService implements BeforeApplicationShutdown {
         connection,
         addStep: (step) => withJob((job) => (job.get('steps') as Y.Array<JobStep>).push([step])),
         addMessage: async (message) => {
+          if (request.silent) return;
           await connection?.transact((doc) => {
             const { threads, blocks } = docParts(doc);
-            if (!blocks.has(request.blockId)) return;
-            let thread = threads.get(request.blockId);
+            if (threadId !== BOARD_THREAD && !blocks.has(threadId)) return;
+            let thread = threads.get(threadId);
             if (!thread) {
               thread = new Y.Array<Message>();
-              threads.set(request.blockId, thread);
+              threads.set(threadId, thread);
             }
             thread.push([{ id: newId(), createdAt: Date.now(), ...message }]);
           });
@@ -141,6 +168,10 @@ export class JobsService implements BeforeApplicationShutdown {
         fail: (message) => {
           failure = message;
         },
+        setResult: (text) => {
+          result = text;
+        },
+        update: (change) => withJob((job) => change(job)),
       });
     } catch (error) {
       // Details go to the server log. People see a message that can't leak internals.
@@ -152,6 +183,7 @@ export class JobsService implements BeforeApplicationShutdown {
         await withJob((job) => {
           job.set('status', controller.signal.aborted ? 'cancelled' : failure ? 'failed' : 'done');
           if (failure) job.set('error', failure);
+          if (result) job.set('result', result);
           job.set('heartbeatAt', Date.now());
         });
         await connection?.disconnect();
@@ -159,6 +191,8 @@ export class JobsService implements BeforeApplicationShutdown {
         console.error(`Job ${jobId} could not save its final state:`, error);
       }
     }
+    if (controller.signal.aborted) return { status: 'cancelled' };
+    return failure ? { status: 'failed', error: failure } : { status: 'done', result };
   }
 
   beforeApplicationShutdown() {

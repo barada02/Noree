@@ -129,8 +129,8 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
   <div class="facts">
     <div class="fact"><b>Thu Nov 5, 7:30 AM IST</b><span>Submission and credit claim deadline</span></div>
     <div class="fact"><b id="countdown">15 hours</b><span>Time left, as of when you opened this</span></div>
-    <div class="fact"><b>V1 is live</b><span>M0 to M6 verified on the live site. Demo project and rehearsal remain</span></div>
-    <div class="fact"><b>Rev 8</b><span>Wed Nov 4, 2026, 22:30 IST</span></div>
+    <div class="fact"><b>V1 is live</b><span>M0 to M6 on the live site. Main agent built on a branch, not merged</span></div>
+    <div class="fact"><b>Rev 9</b><span>Thu Nov 5, 2026, 01:15 IST</span></div>
   </div>
 </header>
 
@@ -200,7 +200,8 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
     <tr><td>Connections</td><td>A line from A to B means B reads from A</td><td>You</td></tr>
     <tr><td>Slate</td><td>Page system, 1600 × 1000 per page</td><td>You (size is one constant)</td></tr>
     <tr><td>Multiplayer</td><td>Yjs</td><td>You</td></tr>
-    <tr><td>Orchestration</td><td>Separate discussion. V1 uses a small temporary dispatch table</td><td>You</td></tr>
+    <tr><td>Orchestration</td><td>One main agent that delegates to independent specialists, each with its own tools. No separate router. Built on the <code>main-agent</code> branch</td><td>You, Nov 5</td></tr>
+    <tr><td>AI actions</td><td>Typed tools on the document, not a filesystem mirror. It acts directly with one Undo, and will ask before deleting. The AI panel is the one way in, replacing block chat</td><td>You, Nov 5</td></tr>
     <tr><td>Hackathon folder</td><td>Read only</td><td>You</td></tr>
     <tr><td>Chat</td><td>One side panel that follows the selected block. Each block has its own shared thread</td><td>Plan default</td></tr>
     <tr><td>Context reach</td><td>One step along connections</td><td>Plan default</td></tr>
@@ -471,7 +472,7 @@ interface BlockContext {                 // what a block gives to the blocks rea
 <section id="ai">
   <p class="kicker">07</p>
   <h2>AI layer</h2>
-  <div class="callout"><p><strong>Orchestration isn't decided here.</strong> V1 has a fixed table behind one interface, which the real design will replace.</p></div>
+  <div class="callout"><p><strong>Superseded.</strong> This section describes the live V1. The main agent design replaces its dispatch table, and is described in <a href="agent-architecture.html">agent-architecture.html</a>.</p></div>
 <pre><code>interface AgentRuntime { run(request: AgentRequest, ctx: RuntimeContext): Promise&lt;void&gt; }
 
 // Temporary dispatch
@@ -910,7 +911,7 @@ node scripts/sync-shared.mjs --watch # while editing shared/
   <h2>After V1</h2>
   <div class="tbl"><table>
     <tr><th>Phase</th><th>What</th><th>Starting point</th></tr>
-    <tr><td>1 Orchestration</td><td>Which agents exist, who decides what runs, handoffs, memory, cost limits, approval rules</td><td>Replaces the temporary dispatch</td></tr>
+    <tr><td>1 Orchestration</td><td><strong>Main agent and specialists: built, tested locally.</strong> Next: <code>ask_question</code> and deleting with confirmation, starting a specialist without waiting, streaming replies, memory, token budgets</td><td><code>docs/agent-architecture.html</code> section 11</td></tr>
     <tr><td>2 More blocks</td><td>Doc, Image, Segment, Diagram, Video, Kanban, Table, Camera capture</td><td>BlockNote experiment, <code>muse-image-1.0</code>, <code>sam-raw-viewer</code>, Mermaid, <code>video-sandbox</code>, the existing camera pairing</td></tr>
     <tr><td>3 Voice, languages</td><td>Speech input, text to speech, translation on any text block</td><td><code>live-agent</code></td></tr>
     <tr><td>4 Assistant</td><td>"Plan this project" creates frames, blocks and connections</td><td>The action layer</td></tr>

@@ -60,7 +60,7 @@ await a.waitForSelector('[aria-label="Project name"]');
 await a.locator('[data-connection="connected"]').waitFor({ timeout: 8000 });
 const url = a.url();
 
-check('panel asks you to select a block', await panel(a).getByText('Select a block to ask about it.').isVisible());
+check('panel offers the board agent', await panel(a).getByText('Ask about the board').isVisible());
 
 await a.getByRole('button', { name: 'Add Slate', exact: true }).click();
 await a.waitForTimeout(200);
@@ -116,7 +116,7 @@ await b.mouse.click(textB.x + 60, textB.y + 12);
 await b.waitForTimeout(250);
 
 // Ask.
-const box = panel(a).getByLabel('Ask about this block');
+const box = panel(a).getByLabel('Ask the AI');
 await box.fill('What value of x is handwritten on the connected Slate? Reply with just the number.');
 const started = Date.now();
 await box.press('Enter');

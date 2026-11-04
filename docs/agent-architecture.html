@@ -85,7 +85,7 @@ svg .arrowhead { fill: var(--line); }
     <li><a href="#map">System map</a></li>
     <li><a href="#runtime">Shared runtime</a></li>
     <li><a href="#slate">Slate agent</a></li>
-    <li><a href="#chat">Block chat</a></li>
+    <li><a href="#main">Main agent</a></li>
     <li><a href="#transcriber">Page transcriber</a></li>
     <li><a href="#generate">3D generation</a></li>
     <li><a href="#models">Models</a></li>
@@ -100,28 +100,29 @@ svg .arrowhead { fill: var(--line); }
 <header>
   <p class="kicker">Current state · Noree V1</p>
   <h1>Agent architecture</h1>
-  <p class="lede">How the AI in Noree works today, from the code as deployed. This is the starting point for the orchestration design, which isn't decided yet.</p>
-  <p class="note">Written Wed Nov 4, 2026 from the code at merge <code>c92b4c8</code>. If this file and the code disagree, the code is right, and this file should be fixed.</p>
+  <p class="lede">How the AI in Noree works: one main agent that talks to people and changes the board, and specialists that it delegates to, each with its own tools.</p>
+  <p class="note">Written Thu Nov 5, 2026 from the code on the <code>main-agent</code> branch, which <strong>isn't on the live site yet</strong>. The live site still has the earlier block chat. If this file and the code disagree, the code is right, and this file should be fixed.</p>
 </header>
 
 <section id="summary">
   <p class="kicker">01</p>
   <h2>Summary</h2>
-  <p>Noree has <strong>one real agent loop, one fixed multi-step pipeline, and three single model calls</strong>. A person starts each of them. There's no router or planner, and no agent decides to start another one.</p>
+  <p><strong>One main agent, with specialists it delegates to.</strong> There's no separate router or planner: the main agent decides what happens by choosing which tools to call. Everyone reaches it through the AI panel.</p>
   <div class="tbl"><table>
     <tr><th>Part</th><th>Kind</th><th>Started by</th><th>Tools</th><th>Can it change the board?</th></tr>
-    <tr><td><strong>Slate agent</strong></td><td>Agent loop, up to 10 steps</td><td>Ask AI in a Slate</td><td>9</td><td>Yes: adds objects to the current page</td></tr>
-    <tr><td><strong>Block chat</strong></td><td>One model call</td><td>Ask in the AI panel</td><td>None</td><td>Only adds messages to the block's thread</td></tr>
-    <tr><td><strong>Page transcriber</strong></td><td>One vision call, cached</td><td>Chat or 3D, when reading a connected Slate</td><td>None</td><td>Only stores the transcript on the page</td></tr>
+    <tr><td><strong>Main agent</strong></td><td>Agent loop, up to 20 steps</td><td>Ask in the AI panel</td><td>8 board tools and 2 specialists</td><td>Yes: frames, blocks and connections. Can't delete</td></tr>
+    <tr><td><strong>Slate agent</strong> (specialist)</td><td>Agent loop, up to 10 steps</td><td>Ask AI in a Slate, or the main agent</td><td>9 of its own</td><td>Only annotates the Slate's current page</td></tr>
+    <tr><td><strong>3D agent</strong> (specialist)</td><td>Fixed pipeline, up to 3 attempts</td><td>Generate on a 3D block, or the main agent</td><td>None: it returns code, and the pipeline tests it</td><td>Only adds a version to its block</td></tr>
+    <tr><td><strong>Page transcriber</strong></td><td>One vision call, cached</td><td>Reading a Slate as context</td><td>None</td><td>Only stores a transcript on the page</td></tr>
     <tr><td><strong>3D brief writer</strong></td><td>One model call</td><td>Generate, when blocks are connected</td><td>None</td><td>No</td></tr>
-    <tr><td><strong>3D coding agent and reviewer</strong></td><td>Fixed retry pipeline, up to 3 attempts, in a separate Python service</td><td>Generate</td><td>None: it returns code, and the pipeline tests it</td><td>The job adds a version to the 3D block</td></tr>
   </table></div>
-  <p class="note"><strong>Seen working on the live site, Nov 4:</strong> Slate runs, chat reading handwriting through a connection, and 3D generation through Modal. A plain prompt was approved on the first attempt in 33 s. A harder one, a cube balanced on a sphere, used all 3 attempts in 107 s and ended as a Draft.</p>
-  <h3>Three rules everything follows</h3>
+  <p class="note"><strong>Tested with real models, Nov 5:</strong> in a local run with two browsers, it planned a two-frame board from one sentence in 8 s, and one Undo reversed it. It answered a question without changing anything, delegated to the Slate agent, and delegated to the 3D agent with Modal. Before building this, a test of 20 runs across both models did the right thing every time.</p>
+  <h3>Rules everything follows</h3>
   <ol>
     <li><strong>HTTP only starts work.</strong> A request returns a job id at once.</li>
     <li><strong>Results go into the shared document.</strong> Agents never reply to one browser, so everyone sees the same progress and closing a tab doesn't stop a run.</li>
-    <li><strong>The server owns exact values.</strong> The Slate model never outputs coordinates. It names things by id, and the server works out geometry and reports back.</li>
+    <li><strong>The server owns exact values.</strong> Models never give coordinates. They name things by id, and the server works out placement.</li>
+    <li><strong>Specialists are independent.</strong> A specialist runs the same way whether a person or the main agent started it, with its own job, limits and progress on its own block. So each can be improved on its own.</li>
   </ol>
 </section>
 
@@ -130,49 +131,52 @@ svg .arrowhead { fill: var(--line); }
   <h2>System map</h2>
   <figure>
     <div class="diagram">
-    <svg viewBox="0 0 1000 540" role="img" aria-label="Three triggers go through the jobs service to the Slate agent, block chat and 3D generation. These call models, the page transcriber, the brief writer and the 3D service. All results are written to the shared document, which syncs to every browser.">
+    <svg viewBox="0 0 1000 520" role="img" aria-label="The AI panel starts the main agent, which uses board tools and delegates to the Slate and 3D agents. Those agents can also be started directly from their own blocks. Everything writes to the shared document, which syncs to every browser.">
       <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrowhead" d="M0 0 L10 5 L0 10 z"/></marker></defs>
       <text class="glabel" x="20" y="36">PERSON PRESSES</text>
-      <rect class="box" x="20" y="60" width="170" height="64" rx="6"/><text x="105" y="88" text-anchor="middle">Ask AI</text><text class="sub" x="105" y="108" text-anchor="middle">in a Slate</text>
-      <rect class="box" x="20" y="178" width="170" height="64" rx="6"/><text x="105" y="206" text-anchor="middle">Ask</text><text class="sub" x="105" y="226" text-anchor="middle">in the AI panel</text>
-      <rect class="box" x="20" y="296" width="170" height="64" rx="6"/><text x="105" y="324" text-anchor="middle">Generate</text><text class="sub" x="105" y="344" text-anchor="middle">on a 3D block</text>
+      <rect class="box" x="20" y="60" width="150" height="64" rx="6"/><text x="95" y="88" text-anchor="middle">Ask</text><text class="sub" x="95" y="108" text-anchor="middle">in the AI panel</text>
+      <rect class="box" x="20" y="190" width="150" height="64" rx="6"/><text x="95" y="218" text-anchor="middle">Ask AI</text><text class="sub" x="95" y="238" text-anchor="middle">in a Slate</text>
+      <rect class="box" x="20" y="300" width="150" height="64" rx="6"/><text x="95" y="328" text-anchor="middle">Generate</text><text class="sub" x="95" y="348" text-anchor="middle">on a 3D block</text>
 
-      <rect class="hot" x="240" y="60" width="150" height="300" rx="6"/>
-      <text x="315" y="188" text-anchor="middle">JobsService</text>
-      <text class="sub" x="315" y="208" text-anchor="middle">limits, heartbeat,</text>
-      <text class="sub" x="315" y="226" text-anchor="middle">cancel, status</text>
-      <path class="edge" d="M190 92 H240" marker-end="url(#a1)"/><path class="edge" d="M190 210 H240" marker-end="url(#a1)"/><path class="edge" d="M190 328 H240" marker-end="url(#a1)"/>
+      <text class="glabel" x="250" y="36">AGENTS, ALL RUN AS JOBS</text>
+      <rect class="hot" x="250" y="60" width="240" height="64" rx="6"/><text x="370" y="88" text-anchor="middle">Main agent</text><text class="sub" x="370" y="108" text-anchor="middle">decides by choosing tools, 20 steps max</text>
+      <rect class="box" x="250" y="190" width="240" height="64" rx="6"/><text x="370" y="218" text-anchor="middle">Slate agent</text><text class="sub" x="370" y="238" text-anchor="middle">own tools, 10 steps max</text>
+      <rect class="box" x="250" y="300" width="240" height="64" rx="6"/><text x="370" y="328" text-anchor="middle">3D agent</text><text class="sub" x="370" y="348" text-anchor="middle">brief, then the Python service</text>
 
-      <text class="glabel" x="440" y="36">WHAT RUNS</text>
-      <rect class="box" x="440" y="60" width="190" height="64" rx="6"/><text x="535" y="88" text-anchor="middle">Slate agent</text><text class="sub" x="535" y="108" text-anchor="middle">tool loop, 10 steps max</text>
-      <rect class="box" x="440" y="178" width="190" height="64" rx="6"/><text x="535" y="206" text-anchor="middle">Block chat</text><text class="sub" x="535" y="226" text-anchor="middle">one call, no tools</text>
-      <rect class="box" x="440" y="296" width="190" height="64" rx="6"/><text x="535" y="324" text-anchor="middle">3D generation job</text><text class="sub" x="535" y="344" text-anchor="middle">fixed sequence</text>
-      <path class="edge" d="M390 92 H440" marker-end="url(#a1)"/><path class="edge" d="M390 210 H440" marker-end="url(#a1)"/><path class="edge" d="M390 328 H440" marker-end="url(#a1)"/>
+      <path class="edge" d="M170 92 H250" marker-end="url(#a1)"/>
+      <path class="edge" d="M170 222 H250" marker-end="url(#a1)"/>
+      <path class="edge" d="M170 332 H250" marker-end="url(#a1)"/>
+      <path class="edge" d="M330 124 V190" marker-end="url(#a1)"/>
+      <path class="edge" d="M250 110 H232 V276 H300 V300" marker-end="url(#a1)"/>
+      <text class="lbl" x="410" y="162">delegates</text>
 
-      <text class="glabel" x="770" y="36">WHAT THEY CALL</text>
-      <rect class="box" x="770" y="60" width="210" height="52" rx="6"/><text x="875" y="82" text-anchor="middle">Models, with fallback</text><text class="sub" x="875" y="100" text-anchor="middle">Baseten, Meta API</text>
-      <rect class="box" x="770" y="150" width="210" height="52" rx="6"/><text x="875" y="172" text-anchor="middle">Page transcriber</text><text class="sub" x="875" y="190" text-anchor="middle">one vision call, cached</text>
-      <rect class="box" x="770" y="232" width="210" height="52" rx="6"/><text x="875" y="254" text-anchor="middle">Brief writer</text><text class="sub" x="875" y="272" text-anchor="middle">one call</text>
-      <rect class="box" x="770" y="314" width="210" height="52" rx="6"/><text x="875" y="336" text-anchor="middle">agent-sandbox (Python)</text><text class="sub" x="875" y="354" text-anchor="middle">code, Modal test, review</text>
-      <path class="edge" d="M630 92 H770" marker-end="url(#a1)"/>
-      <path class="edge" d="M630 200 H690 V176 H770" marker-end="url(#a1)"/>
-      <path class="edge" d="M630 225 H700 V92 " />
-      <path class="edge" d="M630 314 H720 V190 H770" marker-end="url(#a1)"/>
-      <path class="edge" d="M630 328 H745 V258 H770" marker-end="url(#a1)"/>
-      <path class="edge" d="M630 345 H770" marker-end="url(#a1)"/>
+      <text class="glabel" x="580" y="36">WHAT THEY USE</text>
+      <rect class="box" x="580" y="60" width="190" height="64" rx="6"/><text x="675" y="88" text-anchor="middle">Board tools</text><text class="sub" x="675" y="108" text-anchor="middle">read, add, connect, move</text>
+      <rect class="box" x="580" y="190" width="190" height="64" rx="6"/><text x="675" y="218" text-anchor="middle">Drawing tools</text><text class="sub" x="675" y="238" text-anchor="middle">outline, arrow, widgets</text>
+      <rect class="box" x="580" y="300" width="190" height="64" rx="6"/><text x="675" y="328" text-anchor="middle">agent-sandbox</text><text class="sub" x="675" y="348" text-anchor="middle">code, Modal test, review</text>
+      <path class="edge" d="M490 92 H580" marker-end="url(#a1)"/>
+      <path class="edge" d="M490 222 H580" marker-end="url(#a1)"/>
+      <path class="edge" d="M490 332 H580" marker-end="url(#a1)"/>
 
-      <rect class="hot" x="240" y="430" width="740" height="66" rx="6"/>
-      <text x="610" y="458" text-anchor="middle">Shared Y.Doc for the project</text>
-      <text class="sub" x="610" y="478" text-anchor="middle">page objects, job status and steps, threads, 3D versions, transcripts</text>
-      <path class="edge" d="M315 360 V430" marker-end="url(#a1)"/>
-      <path class="edge" d="M535 360 V430" marker-end="url(#a1)"/>
-      <text class="lbl" x="425" y="400" text-anchor="middle">all results written here</text>
-      <rect class="box" x="20" y="430" width="170" height="66" rx="6"/><text x="105" y="458" text-anchor="middle">Every browser</text><text class="sub" x="105" y="478" text-anchor="middle">sees it live</text>
-      <path class="edge" d="M240 463 H190" marker-end="url(#a1)"/>
+      <rect class="box" x="810" y="150" width="170" height="104" rx="6"/><text x="895" y="190" text-anchor="middle">Models</text><text class="sub" x="895" y="210" text-anchor="middle">Muse Spark, Muse Spark</text><text class="sub" x="895" y="228" text-anchor="middle">Open, with fallback</text>
+      <path class="edge" d="M770 92 H895 V150" marker-end="url(#a1)"/>
+      <path class="edge" d="M770 222 H810" marker-end="url(#a1)"/>
+      <path class="edge" d="M770 332 H895 V254" marker-end="url(#a1)"/>
+
+      <rect class="hot" x="250" y="420" width="730" height="66" rx="6"/>
+      <text x="615" y="448" text-anchor="middle">Shared Y.Doc for the project</text>
+      <text class="sub" x="615" y="468" text-anchor="middle">blocks, page objects, job status and steps, conversations, 3D versions</text>
+      <path class="edge" d="M370 364 V420" marker-end="url(#a1)"/>
+      <text class="lbl" x="480" y="396" text-anchor="middle">all results written here</text>
+      <rect class="box" x="20" y="420" width="150" height="66" rx="6"/><text x="95" y="448" text-anchor="middle">Every browser</text><text class="sub" x="95" y="468" text-anchor="middle">sees it live</text>
+      <path class="edge" d="M250 453 H170" marker-end="url(#a1)"/>
     </svg>
     </div>
-    <figcaption>Each row runs only because a person pressed something. Nothing here decides what to run next on its own.</figcaption>
+    <figcaption>A specialist has two ways in: its own button, or the main agent. Both run the same code.</figcaption>
   </figure>
+
+  <h3>The engine</h3>
+  <p><code>agents/engine/loop.ts</code> is the loop every agent runs on: call the model, run its tools, feed results back, stop. It handles provider fallback, step limits and cancelling, and turns a crashing tool into an error the model can read. It knows nothing about any one agent. <code>agents/engine/tools.ts</code> defines a tool as a name, a description, a zod schema and a function. The schema is both what the model sees and what its input is checked against, and bad input comes back as a message it can correct.</p>
 </section>
 
 <section id="runtime">
@@ -188,11 +192,14 @@ svg .arrowhead { fill: var(--line); }
     <li>The status becomes <code>done</code>, <code>failed</code> or <code>cancelled</code>, and the connection closes.</li>
   </ol>
 <pre><code>jobs[id] = {
-  id, blockId, kind: 'slate-run' | 'chat' | 'generate-3d',
+  id, blockId, kind: 'main' | 'slate-run' | 'generate-3d',
   status: 'running' | 'done' | 'failed' | 'cancelled',
   steps: [{ title, status, note }],   // shown live in the activity panel
   startedBy, startedAt, heartbeatAt,
   error?,                             // a message safe to show to people
+  threadId,                           // the conversation it reports to
+  result?, parentJobId?,              // how a specialist reports back to the main agent
+  undo?, undone?,                     // main agent runs: how to reverse its board changes
   pageId?                             // Slate runs only
 }</code></pre>
   <h3>What a job's work receives</h3>
@@ -203,18 +210,21 @@ svg .arrowhead { fill: var(--line); }
     <tr><td><code>addStep()</code></td><td>Adds a step to the activity panel</td></tr>
     <tr><td><code>addMessage()</code></td><td>Adds a message to the block's thread</td></tr>
     <tr><td><code>fail()</code></td><td>Marks the job failed with a message, once the work returns</td></tr>
+    <tr><td><code>setResult()</code></td><td>The short result a parent agent gets back</td></tr>
+    <tr><td><code>update()</code></td><td>Changes the job's own record, such as its undo list</td></tr>
   </table></div>
-  <p><strong>The dispatch is the HTTP route.</strong> Each route calls one fixed function, and nothing chooses between them at runtime.</p>
+  <p><strong>Routes.</strong> Each calls one fixed function. A choice between agents only happens inside the main agent.</p>
 <pre><code>POST /projects/:id/blocks/:blockId/slate-run  -> runSlateJob
-POST /projects/:id/blocks/:blockId/chat       -> runChatJob
+POST /projects/:id/agent                      -> runMainAgentJob
 POST /projects/:id/blocks/:blockId/generate   -> runGenerateJob
-POST /projects/:id/jobs/:jobId/cancel         -> abort signal</code></pre>
+POST /projects/:id/jobs/:jobId/cancel         -> abort signal, which also stops any specialist it started
+POST /projects/:id/jobs/:jobId/undo           -> reverses a main agent run</code></pre>
 </section>
 
 <section id="slate">
   <p class="kicker">04</p>
   <h2>Slate agent</h2>
-  <p>The only true agent. It reads a page image, chooses tools, sees results, and corrects itself. The loop is in <code>agents/slate/agent.ts</code>, and <code>agents/slate-run.ts</code> connects it to the document.</p>
+  <p>A specialist that runs on the shared engine. It reads a page image, chooses tools, sees results, and corrects itself. The loop is in <code>agents/slate/agent.ts</code>, and <code>agents/slate-run.ts</code> connects it to the document.</p>
   <figure>
     <div class="diagram">
     <svg viewBox="0 95 1000 185" role="img" aria-label="The page is read into a scene of clusters. The model picks tools, the server runs them and returns results or errors to the model, for up to ten steps. Created objects are written to the document.">
@@ -269,24 +279,50 @@ POST /projects/:id/jobs/:jobId/cancel         -> abort signal</code></pre>
   </ul>
 </section>
 
-<section id="chat">
+<section id="main">
   <p class="kicker">05</p>
-  <h2>Block chat</h2>
-  <p>A single model call with context and no tools, in <code>agents/chat.ts</code>. It can only answer.</p>
+  <h2>Main agent</h2>
+  <p>The one agent people talk to, in <code>agents/main-agent.ts</code>. It replaces the earlier block chat. With nothing selected it works from the board, and with a block selected it starts from that block and what's connected to it. A simple question takes one model step, so it stays as fast as chat was.</p>
+  <h3>One turn</h3>
   <ol>
-    <li>Read the last 10 messages of this block's thread.</li>
-    <li>Add the person's question to the thread. The server does this, so a refused request leaves no orphan message.</li>
-    <li>Collect context from the block and its incoming connections (section 9).</li>
-    <li>Send one model call: earlier turns, source images, then the context and question.</li>
-    <li>Add the answer to the thread.</li>
+    <li>Read the last 10 messages of the conversation. The board has its own, and each block has its own, shared by everyone.</li>
+    <li>Add the person's request to the conversation. The server does this, so a refused request leaves no orphan message.</li>
+    <li>Send the model a summary of the whole board with ids, so it starts grounded without spending a step to look. With a block selected, add its content, its connected blocks and up to 3 images.</li>
+    <li>Run the loop until the model replies with no tool calls, for up to 20 steps.</li>
+    <li>Add the reply to the conversation.</li>
   </ol>
-  <p>Each block has its own thread, and everyone on the board shares it. The Slate agent's summaries and 3D results land in the same thread, so chat can see them as earlier turns.</p>
+  <h3>Tools</h3>
+  <div class="tbl"><table class="names">
+    <tr><th>Tool</th><th>What it does</th><th>How it fails, so the model can correct itself</th></tr>
+    <tr><td><code>read_board</code></td><td>Lists frames, blocks and connections with ids</td><td>Doesn't fail</td></tr>
+    <tr><td><code>read_block</code></td><td>Reads a block's full content, transcribing a Slate if needed</td><td>Unknown id</td></tr>
+    <tr><td><code>add_frame</code></td><td>Adds a frame. The server places it</td><td>Over the limit of new blocks</td></tr>
+    <tr><td><code>add_block</code></td><td>Adds a Text, Sticky, Slate or 3D block, with optional content and frame</td><td>Unknown type or frame, or over the limit</td></tr>
+    <tr><td><code>update_block</code></td><td>Changes a title, text or prompt</td><td>Unknown id, or a field the block doesn't have</td></tr>
+    <tr><td><code>connect</code>, <code>disconnect</code></td><td>Adds or removes a connection</td><td>Unknown block, self link, duplicate, loop or frame, using the action layer's rules</td></tr>
+    <tr><td><code>move_to_frame</code></td><td>Moves a block into or out of a frame</td><td>Unknown id, or a frame inside a frame</td></tr>
+    <tr><td><code>run_slate_agent</code></td><td>Delegates to the Slate agent</td><td>Wrong block type, nothing on the page, or the specialist's own failure</td></tr>
+    <tr><td><code>generate_3d_model</code></td><td>Delegates to the 3D agent</td><td>Wrong block type, one already running, or the specialist's own failure</td></tr>
+  </table></div>
+  <h3>Specialists</h3>
+  <p><code>agents/subagents.ts</code> is the list of specialists. <strong>Adding one means adding one tool to that list</strong>, and the main agent picks it up. Each starts as its own job on its own block, using the same functions as the block's own button, so it gets the same limits, progress and history. It returns a short result, not its whole transcript, which keeps the main agent's context small. Stopping the main agent stops any specialist it started.</p>
+  <p>When a specialist works on the block whose conversation the main agent is in, it stays quiet and the main agent reports, so people hear one voice. Otherwise it also leaves its own message on its block.</p>
+  <h3>Placement</h3>
+  <p>Models never give coordinates. <code>shared/layout.ts</code> places everything: new frames to the right of everything, blocks inside a frame in rows that fit its width, and loose blocks above the frames. Frames only grow downward, so a batch of additions in any order can't overlap. New blocks are brought into view for the person who asked, as they appear.</p>
+  <h3>Undo</h3>
+  <p>Each change records how to reverse itself on the job, so <strong>one Undo reverses a whole run</strong>, even after a reload or a restart. The undo also goes in the conversation, or the agent's history would still say its work was on the board. Slate annotations and 3D versions keep their own undo, because they belong to their blocks.</p>
+  <h3>Limits</h3>
+  <ul>
+    <li>20 steps per turn, and 30 new blocks per turn. Testing showed one model can over-build.</li>
+    <li>One main agent run per board. A request made while it's busy elsewhere is told so, and the panel says why.</li>
+    <li>It can't delete. That's held for <code>ask_question</code>, so it can confirm first.</li>
+  </ul>
 </section>
 
 <section id="transcriber">
   <p class="kicker">06</p>
   <h2>Page transcriber</h2>
-  <p>Handwriting isn't text, so when chat or 3D reads a connected Slate, one vision call turns a page into text.</p>
+  <p>Handwriting isn't text, so when the main agent or 3D reads a Slate, one vision call turns a page into text.</p>
   <ul>
     <li><strong>Cached on the page.</strong> The key is the snapshot's file name, which is a hash of its content. Same picture, same transcript, no second call.</li>
     <li><strong>Limit:</strong> 3 pages per Slate, current page first.</li>
@@ -357,8 +393,8 @@ POST /projects/:id/jobs/:jobId/cancel         -> abort signal</code></pre>
   <h2>Models</h2>
   <div class="tbl"><table>
     <tr><th>Use</th><th>First choice</th><th>Fallback</th><th>Where it's set</th></tr>
-    <tr><td>Slate agent</td><td>Person's choice in the Slate, default Muse Spark Open on Baseten</td><td>The other provider</td><td><code>providerChain(provider)</code></td></tr>
-    <tr><td>Block chat</td><td>Muse Spark on the Meta API</td><td>Muse Spark Open on Baseten</td><td><code>providerChain('meta')</code></td></tr>
+    <tr><td>Slate agent</td><td>Person's choice in the Slate, or Muse Spark Open on Baseten when the main agent starts it</td><td>The other provider</td><td><code>providerChain(provider)</code></td></tr>
+    <tr><td>Main agent</td><td>Muse Spark on the Meta API</td><td>Muse Spark Open on Baseten</td><td><code>providerChain('meta')</code>. It made no tool errors across the 10 test runs on that model</td></tr>
     <tr><td>Page transcriber</td><td>Same chain as the job that called it</td><td>Same</td><td><code>createTranscriber</code></td></tr>
     <tr><td>3D brief</td><td>Muse Spark on the Meta API</td><td>Muse Spark Open on Baseten</td><td><code>providerChain('meta')</code></td></tr>
     <tr><td>3D coding and review</td><td>Muse Spark Open on Baseten</td><td>None</td><td><code>AGENT_MODEL</code> in the service</td></tr>
@@ -377,7 +413,7 @@ POST /projects/:id/jobs/:jobId/cancel         -> abort signal</code></pre>
 <section id="context">
   <p class="kicker">09</p>
   <h2>Context</h2>
-  <p><code>collectContext</code> in <code>agents/context.ts</code> gives chat and 3D what they read. A line from A to B means B reads from A, one step only.</p>
+  <p><code>collectContext</code> in <code>agents/context.ts</code> gives the main agent and 3D what they read. A line from A to B means B reads from A, one step only.</p>
   <div class="tbl"><table>
     <tr><th>Block</th><th>Text it gives</th><th>Images it gives</th></tr>
     <tr><td>Text, Sticky</td><td>Its content</td><td>None</td></tr>
@@ -386,7 +422,7 @@ POST /projects/:id/jobs/:jobId/cancel         -> abort signal</code></pre>
     <tr><td>Frame</td><td colspan="2">Can't be connected</td></tr>
   </table></div>
   <p><strong>Limits:</strong> 6,000 characters per block, and 3 images in total, with sources served before the block's own.</p>
-  <p><strong>Prompt injection:</strong> chat and brief system prompts say block content is information, not instructions. That's a mitigation, not a guarantee. Chat and the brief writer have no tools, and generated code runs sandboxed, which limits the damage. The Slate agent's prompt has no such line, so see section 11.</p>
+  <p><strong>Prompt injection:</strong> the main agent and brief prompts say block content is information, not instructions. That's a mitigation, not a guarantee. The main agent has tools, so text on a board could try to steer it, but it can't delete, and one Undo reverses its changes. Generated code runs sandboxed. The Slate agent's prompt has no such line, so see section 11.</p>
 </section>
 
 <section id="failures">
@@ -409,6 +445,8 @@ POST /projects/:id/jobs/:jobId/cancel         -> abort signal</code></pre>
     <tr><td>AI runs across the server, per hour</td><td>120</td><td><code>AI_MAX_RUNS_PER_HOUR</code></td></tr>
     <tr><td>3D runs across the server, per hour</td><td>30</td><td><code>GEN3D_MAX_RUNS_PER_HOUR</code></td></tr>
     <tr><td>Running jobs per block</td><td>1</td><td>Fixed</td></tr>
+    <tr><td>Running main agents per board</td><td>1</td><td>Fixed</td></tr>
+    <tr><td>Main agent steps, and new blocks, per turn</td><td>20 and 30</td><td>Fixed</td></tr>
     <tr><td>Running 3D jobs on the server</td><td>1</td><td>Fixed</td></tr>
     <tr><td>Slate agent model steps per run</td><td>10</td><td>Fixed</td></tr>
     <tr><td>3D attempts per run</td><td>3</td><td>Fixed in the service</td></tr>
@@ -419,24 +457,24 @@ POST /projects/:id/jobs/:jobId/cancel         -> abort signal</code></pre>
 <section id="gaps">
   <p class="kicker">11</p>
   <h2>What doesn't exist yet</h2>
-  <p>These are the honest gaps, and the input for the orchestration discussion.</p>
+  <p>The main agent closed the biggest gap. These are the ones left, roughly in the order I'd take them.</p>
   <div class="tbl"><table>
     <tr><th>Gap</th><th>Today</th><th>Why it matters next</th></tr>
-    <tr><td><strong>No router or planner</strong></td><td>The route decides what runs</td><td>"Plan this project" has nothing to receive it</td></tr>
-    <tr><td><strong>Agents can't call each other</strong></td><td>3D uses the transcriber and brief writer through fixed code, not as a decision</td><td>Handoffs would need to be designed</td></tr>
-    <tr><td><strong>Agents don't use the action layer</strong></td><td>Agents write objects and messages straight to the document. <code>shared/actions.ts</code> is used by people's actions</td><td>An assistant that adds blocks and connections should use it, for validation and authorship</td></tr>
-    <tr><td><strong>The Slate agent ignores connections</strong></td><td>It only sees its own page</td><td>A Slate can't yet build on other blocks</td></tr>
-    <tr><td><strong>The Slate agent doesn't see its thread</strong></td><td>Each run starts fresh, apart from objects on the page</td><td>Follow-up instructions lose earlier conversation</td></tr>
-    <tr><td><strong>Chat can't act</strong></td><td>No tools, so it can only answer</td><td>"Add a sticky for that" isn't possible</td></tr>
-    <tr><td><strong>No shared memory</strong></td><td>Threads are per block, and read by chat only</td><td>Nothing connects what was learned across blocks</td></tr>
-    <tr><td><strong>No project-level cost limit</strong></td><td>Hourly counters across the server only, with no token budget</td><td>Longer autonomous runs need budgets</td></tr>
+    <tr><td><strong>It can't ask you anything</strong></td><td>No <code>ask_question</code>, so it can't pause, offer choices or confirm. That's also why it can't delete</td><td>The next main agent feature. Needs pausing and resuming a run</td></tr>
+    <tr><td><strong>Long specialists hold up the turn</strong></td><td>The main agent waits for a specialist to finish, and runs them one at a time</td><td>Starting one and carrying on would make it feel much faster</td></tr>
+    <tr><td><strong>Replies don't stream</strong></td><td>A reply appears when it's complete</td><td>Noticeable on longer answers</td></tr>
+    <tr><td><strong>The Slate agent ignores connections and its conversation</strong></td><td>It only sees its own page, and each run starts fresh</td><td>A Slate can't yet build on other blocks, and follow-ups lose context</td></tr>
+    <tr><td><strong>The main agent can't write on a Slate</strong></td><td>It can create one but not put content on it. Page images only come from a browser</td><td>"Work this out on a Slate" isn't possible yet</td></tr>
+    <tr><td><strong>Agents write directly in places</strong></td><td>Board structure uses the action layer. Text, prompts, Slate objects and messages are direct writes</td><td>Worth moving to actions for validation and authorship</td></tr>
+    <tr><td><strong>No shared memory</strong></td><td>Conversations are per block and per board, and aren't read across each other</td><td>Nothing carries what was learned between conversations</td></tr>
+    <tr><td><strong>No token budget</strong></td><td>Limits count runs and steps, not tokens or cost</td><td>Longer autonomous runs need budgets</td></tr>
     <tr><td><strong>Everything needs a person to start it</strong></td><td>No background or scheduled runs</td><td>Autonomous agents would need approval rules</td></tr>
     <tr><td><strong>Slate prompt-injection hardening</strong></td><td>Its prompt doesn't say that page content is only information, and pasted text reaches it</td><td>Worth adding. Damage is limited, since its tools can only annotate that page</td></tr>
     <tr><td><strong>The 3D coding agent can't iterate</strong></td><td>One call per attempt, no tools, and retries don't see the previous code</td><td>A good model with one small flaw gets thrown away and rewritten, which can fix one thing and break another</td></tr>
     <tr><td><strong>Reviewer can pass on failure</strong></td><td>If the review call errors, the attempt is accepted on the sandbox test alone</td><td>Approved may mean "rendered" rather than "reviewed" when the vision call is down</td></tr>
     <tr><td><strong>Cancel isn't authorized</strong></td><td>Anyone with a job id can stop that job. Ids are random and visible to people on that board</td><td>Fine for links with no accounts. Revisit with accounts</td></tr>
   </table></div>
-  <div class="callout"><p><strong>Where it can extend:</strong> <code>JobsService</code> already gives any new agent limits, cancellation and live reporting, and <code>applyAction</code> gives it a safe way to change the board. A router could start as one more job kind.</p></div>
+  <div class="callout"><p><strong>How to extend it:</strong> a new specialist is one tool in <code>agents/subagents.ts</code>, with its own function and its own tools on the shared engine. It can be improved and tested alone, through its own button, and the main agent can use it right away.</p></div>
 </section>
 
 <section id="files">
@@ -446,12 +484,16 @@ POST /projects/:id/jobs/:jobId/cancel         -> abort signal</code></pre>
     <tr><th>File</th><th>What's there</th></tr>
     <tr><td><code>back_end/src/agents/agents.controller.ts</code></td><td>HTTP routes that start and cancel jobs</td></tr>
     <tr><td><code>back_end/src/jobs/jobs.service.ts</code></td><td>Job lifecycle, limits, heartbeat, cancel</td></tr>
+    <tr><td><code>back_end/src/agents/engine/</code></td><td>The shared loop, and how tools are defined and checked</td></tr>
+    <tr><td><code>back_end/src/agents/main-agent.ts</code></td><td>The main agent: prompt, board tools, board summary, undo</td></tr>
+    <tr><td><code>back_end/src/agents/subagents.ts</code></td><td>The list of specialists the main agent can delegate to</td></tr>
+    <tr><td><code>shared/layout.ts</code></td><td>Where the server places what agents create</td></tr>
     <tr><td><code>back_end/src/agents/slate-run.ts</code></td><td>Connects the Slate agent to the document</td></tr>
-    <tr><td><code>back_end/src/agents/slate/agent.ts</code></td><td>The agent loop and its system prompt</td></tr>
+    <tr><td><code>back_end/src/agents/slate/agent.ts</code></td><td>The Slate agent's prompt, and how it uses the engine</td></tr>
     <tr><td><code>back_end/src/agents/slate/tools.ts</code></td><td>Tool definitions and their server-side logic</td></tr>
     <tr><td><code>back_end/src/agents/slate/scene.ts</code>, <code>cluster.ts</code>, <code>geometry.ts</code>, <code>widgets.ts</code></td><td>Page model, ink grouping, geometry, widget validation</td></tr>
     <tr><td><code>back_end/src/agents/slate/providers/</code></td><td>Baseten and Meta adapters, fallback order</td></tr>
-    <tr><td><code>back_end/src/agents/chat.ts</code></td><td>Block chat, transcriber, <code>callWithFallback</code></td></tr>
+    <tr><td><code>back_end/src/agents/chat.ts</code></td><td>The page transcriber and <code>callWithFallback</code></td></tr>
     <tr><td><code>back_end/src/agents/context.ts</code></td><td><code>collectContext</code> and its limits</td></tr>
     <tr><td><code>back_end/src/agents/generate3d.ts</code>, <code>sandbox-client.ts</code></td><td>3D job, brief writer, client for the service</td></tr>
     <tr><td><code>services/agent-sandbox/app/agent.py</code></td><td>3D coding agent and vision review</td></tr>
