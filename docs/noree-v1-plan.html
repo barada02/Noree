@@ -129,8 +129,8 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
   <div class="facts">
     <div class="fact"><b>Thu Nov 5, 7:30 AM IST</b><span>Submission and credit claim deadline</span></div>
     <div class="fact"><b id="countdown">15 hours</b><span>Time left, as of when you opened this</span></div>
-    <div class="fact"><b>Ready to ship</b><span>M0 to M4 live, M5 to M7 verified locally</span></div>
-    <div class="fact"><b>Rev 7</b><span>Wed Nov 4, 2026, 20:35 IST</span></div>
+    <div class="fact"><b>V1 is live</b><span>M0 to M6 verified on the live site. Demo project and rehearsal remain</span></div>
+    <div class="fact"><b>Rev 8</b><span>Wed Nov 4, 2026, 22:30 IST</span></div>
   </div>
 </header>
 
@@ -147,9 +147,9 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
     <tr><td>M2 Multiplayer</td><td>19:15 to 20:30</td><td>Two browsers in sync <strong>on the live server</strong></td><td><span class="pill done">done</span></td></tr>
     <tr><td>M3 Slate</td><td>20:30 to 22:30</td><td>Handwriting and AI inside a block, with pages</td><td><span class="pill done">done</span></td></tr>
     <tr><td>M4 Connections, chat</td><td>22:30 to 23:45</td><td>A line gives a block's chat real context</td><td><span class="pill done">done</span></td></tr>
-    <tr><td>M5 3D block</td><td>23:45 to 01:00</td><td>Slate connected to 3D, Generate works live</td><td><span class="pill doing">live test next</span></td></tr>
-    <tr><td>M6 Read, export</td><td>01:00 to 01:30</td><td>Read view and Markdown export</td><td><span class="pill done">done, live test next</span></td></tr>
-    <tr><td>M7 Polish</td><td>01:30 to 03:00</td><td>Demo script runs twice on production</td><td><span class="pill doing">rehearsal next</span></td></tr>
+    <tr><td>M5 3D block</td><td>23:45 to 01:00</td><td>Slate connected to 3D, Generate works live</td><td><span class="pill done">done</span></td></tr>
+    <tr><td>M6 Read, export</td><td>01:00 to 01:30</td><td>Read view and Markdown export</td><td><span class="pill done">done</span></td></tr>
+    <tr><td>M7 Polish</td><td>01:30 to 03:00</td><td>The whole demo runs twice on production</td><td><span class="pill doing">rehearsal next</span></td></tr>
     <tr><td>Video, README</td><td>03:00 to 05:30</td><td>Recorded and uploaded</td><td><span class="pill todo">todo</span></td></tr>
     <tr><td>Submit</td><td>by 06:30</td><td>One hour of buffer before the deadline</td><td><span class="pill todo">todo</span></td></tr>
   </table></div>
@@ -323,6 +323,9 @@ svg .loop { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
     <tr><td><code>wss://.../api/collab</code></td><td>Nest <code>/collab</code></td><td>Hocuspocus, via an upgrade listener</td></tr>
     <tr><td><code>/api/socket.io</code></td><td>Nest <code>/socket.io</code></td><td>Existing camera gateway, unchanged</td></tr>
   </table></div>
+
+  <h3>Agents</h3>
+  <p>How the AI works in detail, including what doesn't exist yet, is in <a href="agent-architecture.html">agent-architecture.html</a>.</p>
 
   <h3>Technology</h3>
   <div class="tbl"><table>
@@ -779,7 +782,8 @@ node scripts/sync-shared.mjs --watch # while editing shared/
       <li><input type="checkbox" disabled checked> Sandbox on the server (G5): package, pm2 app, Modal tokens. Runs on arm64, and its Modal probe passes</li>
     </ul>
     <p class="dw"><strong>Done when:</strong> connecting a Slate to a 3D block and pressing Generate makes a model reflecting the Slate, while a second browser watches the same progress.</p>
-    <p class="dw"><strong>Verified locally Nov 4, 20:25:</strong> with the real service and Modal, a Slate's content became a brief and a model that passed review on attempt 1 in 69 s. A second browser watched the same progress, live 3D rendered, and the out-of-date badge worked for both people. <strong>Still open:</strong> the same on the live site.</p>
+    <p class="dw"><strong>Verified locally Nov 4, 20:25:</strong> with the real service and Modal, a Slate's content became a brief and a model that passed review on attempt 1 in 69 s. A second browser watched the same progress, live 3D rendered, and the out-of-date badge worked for both people. </p>
+    <p class="dw"><strong>Verified live Nov 4, 22:30:</strong> on <code>kanya.alito.tech</code>, a prompt was approved on the first attempt in 33 s through the server's 3D service and Modal, and a harder connected prompt finished as a Draft in 107 s with a second browser watching. Live 3D, the out-of-date badge, Read view and export all worked.</p>
     <p class="gate"><strong>Demo safety:</strong> because Modal can be slow or fail, generate before recording. Every version is kept in the block, so a good result stays available. This replaces a shared "load from library" list, which would have shown one project's models and prompts to everyone.</p>
   </div>
 
@@ -798,9 +802,9 @@ node scripts/sync-shared.mjs --watch # while editing shared/
       <li><input type="checkbox" disabled checked> Empty, error and loading states for each block</li>
       <li><input type="checkbox" disabled checked> Landing page link into the product</li>
       <li><input type="checkbox" disabled> Seed a demo project, set spend limits</li>
-      <li><input type="checkbox" disabled> Run the demo script twice on production</li>
+      <li><input type="checkbox" disabled> Run the whole demo twice on production</li>
     </ul>
-    <p class="dw"><strong>Done when:</strong> the whole script in <a href="#submit">Submission</a> works twice in a row on the live site.</p>
+    <p class="dw"><strong>Done when:</strong> the whole demo works twice in a row on the live site.</p>
   </div>
 
   <h3>Cut list, in order</h3>
@@ -869,17 +873,6 @@ node scripts/sync-shared.mjs --watch # while editing shared/
   </ul>
   <h3>Checks before going public</h3>
   <p>So far: a pattern search of Noree's git history found no keys, and no <code>.env</code> or <code>.pem</code> file was ever tracked. The hackathon repo's <code>.env</code> is ignored and has no history. <code>deploy/aws-bootstrap.sh</code> includes the instance ID and GitHub numeric IDs, which aren't secrets. This was a basic search, so run a proper scanner again after the copied code is in.</p>
-  <h3>3-minute video</h3>
-  <div class="tbl"><table>
-    <tr><th>Time</th><th>Show</th><th>Say</th></tr>
-    <tr><td>0:00</td><td>The finished board</td><td>Planning with AI happens in chat windows, and the thinking gets lost. Noree turns it into a shared board</td></tr>
-    <tr><td>0:20</td><td>New project, add a Slate, handwrite a phasor, Ask AI</td><td>The agent reads handwriting and acts on the page with tools. It never guesses pixel positions</td></tr>
-    <tr><td>0:50</td><td>Drag the Argand point, the live label changes</td><td>Interactive output, running on open-weight Muse Spark Open on Baseten</td></tr>
-    <tr><td>1:15</td><td>Add a 3D block, draw a connection, Generate, watch the steps</td><td>The line is the context. The model is written, tested in a Modal sandbox and reviewed by a vision model</td></tr>
-    <tr><td>1:50</td><td>Second browser: a cursor moves, edits a note, sees the same job</td><td>Every person and every agent works in the same live document</td></tr>
-    <tr><td>2:15</td><td>Group into frames, Read view, Export</td><td>The canvas gives freedom, and frames give order</td></tr>
-    <tr><td>2:35</td><td>Fast overview, architecture</td><td>What was built during the hackathon, and where it goes next</td></tr>
-  </table></div>
   <h3>Judging</h3>
   <div class="tbl"><table>
     <tr><th>Criterion</th><th>Weight</th><th>Evidence</th></tr>
