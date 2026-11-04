@@ -3,7 +3,8 @@ import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
 import { useMemo, useState } from "react";
 import * as Y from "yjs";
 import { docParts, readLayout, type BlockType } from "../shared/schema.js";
-import { BLOCKS } from "./blocks/registry";
+import { BLOCK_BY_TYPE, BLOCKS } from "./blocks/registry";
+import { SlateFocus } from "./blocks/slate/SlateFocus";
 import { BoardCanvas } from "./board/BoardCanvas";
 import { localActor } from "./doc/actor";
 import { useBoard, type BoardNode } from "./doc/useBoard";
@@ -86,6 +87,9 @@ function Workspace({ doc, provider, status, projectId }: WorkspaceProps) {
   const undo = useUndo(doc);
   const flow = useReactFlow<BoardNode>();
   const empty = board.nodes.length === 0;
+  const [focusId, setFocusId] = useState<string | null>(null);
+  // The block may be deleted by someone else while it is open.
+  const focused = focusId !== null && board.nodes.some((n) => n.id === focusId) ? focusId : null;
 
   const add = (type: BlockType) => {
     // New blocks land near the middle of the visible board, offset so they don't stack exactly.
@@ -102,6 +106,8 @@ function Workspace({ doc, provider, status, projectId }: WorkspaceProps) {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-stone-50 text-stone-900 dark:bg-black dark:text-stone-100">
+      {/* While a block is open full screen, keyboard and screen readers stay inside it. */}
+      <div inert={focused !== null} className="flex h-full min-w-0 flex-1">
       <ProjectSidebar activeId={projectId}>
         <FrameList doc={doc} act={board.act} />
       </ProjectSidebar>
@@ -109,7 +115,16 @@ function Workspace({ doc, provider, status, projectId }: WorkspaceProps) {
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar doc={doc} projectId={projectId} status={status} presence={presence} undo={undo} />
         <main className="relative min-h-0 flex-1">
-          <BoardCanvas doc={doc} board={board} presence={presence} onDragStart={undo.newStep} />
+          <BoardCanvas
+            doc={doc}
+            board={board}
+            presence={presence}
+            onDragStart={undo.newStep}
+            paused={focused !== null}
+            onOpenBlock={(id, type) => {
+              if (BLOCK_BY_TYPE[type].hasFocus) setFocusId(id);
+            }}
+          />
           {empty && (
             <p className="pointer-events-none absolute inset-x-0 top-1/3 text-center text-sm text-stone-500">
               Add a block from the menu on the left to start.
@@ -117,6 +132,10 @@ function Workspace({ doc, provider, status, projectId }: WorkspaceProps) {
           )}
         </main>
       </div>
+      </div>
+      {focused && (
+        <SlateFocus doc={doc} id={focused} projectId={projectId} actor={actor} personName={presence.name} undo={undo} onClose={() => setFocusId(null)} />
+      )}
     </div>
   );
 }

@@ -13,7 +13,10 @@ function EditableTitle({ id, title, className }: { id: string; title: string; cl
 
   if (draft === null) {
     return (
-      <span className={`truncate ${className}`} onDoubleClick={() => setDraft(title)} title="Double-click to rename">
+      <span className={`truncate ${className}`} onDoubleClick={(e) => {
+          e.stopPropagation();
+          setDraft(title);
+        }} title="Double-click to rename">
         {title}
       </span>
     );

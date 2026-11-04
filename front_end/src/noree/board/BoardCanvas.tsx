@@ -14,6 +14,7 @@ import "@xyflow/react/dist/style.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as Y from "yjs";
 import { useTheme } from "../../useTheme";
+import type { BlockType } from "../../shared/schema.js";
 import type { BoardNode, useBoard } from "../doc/useBoard";
 import type { usePresence } from "../doc/usePresence";
 import { BoardContext } from "./context";
@@ -24,6 +25,9 @@ type Props = {
   board: ReturnType<typeof useBoard>;
   presence: ReturnType<typeof usePresence>;
   onDragStart: () => void;
+  /** Set while a block is open full screen, so keys go there and not to the board. */
+  paused: boolean;
+  onOpenBlock: (id: string, type: BlockType) => void;
 };
 
 /** Other people's cursors, positioned in board coordinates and kept a constant size on screen. */
@@ -52,7 +56,7 @@ function PeerCursors({ peers }: { peers: ReturnType<typeof usePresence>["peers"]
   );
 }
 
-export function BoardCanvas({ doc, board, presence, onDragStart }: Props) {
+export function BoardCanvas({ doc, board, presence, onDragStart, paused, onOpenBlock }: Props) {
   const { theme } = useTheme();
   const flow = useReactFlow<BoardNode>();
   const [hoverFrameId, setHoverFrameId] = useState<string | null>(null);
@@ -132,6 +136,7 @@ export function BoardCanvas({ doc, board, presence, onDragStart }: Props) {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeDragStart={onDragStart}
+        onNodeDoubleClick={(_, node) => onOpenBlock(node.id, node.data.blockType)}
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onBeforeDelete={onBeforeDelete}
@@ -145,7 +150,7 @@ export function BoardCanvas({ doc, board, presence, onDragStart }: Props) {
         minZoom={0.1}
         maxZoom={2}
         zoomOnDoubleClick={false}
-        deleteKeyCode={["Backspace", "Delete"]}
+        deleteKeyCode={paused ? null : ["Backspace", "Delete"]}
       >
         <Background variant={BackgroundVariant.Dots} gap={24} />
         <Controls />

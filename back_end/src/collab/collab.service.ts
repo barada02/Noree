@@ -32,6 +32,15 @@ export class CollabService implements BeforeApplicationShutdown {
         if (!id) throw new Error('Unknown project');
         const state = this.store.loadDoc(id);
         if (state) Y.applyUpdate(document, state);
+        // No job can be running when a document first loads, so any marked running died in a restart.
+        document.transact(() => {
+          for (const job of docParts(document).jobs.values()) {
+            if (job.get('status') === 'running') {
+              job.set('status', 'failed');
+              job.set('error', 'The server restarted during this run. Try again.');
+            }
+          }
+        });
       },
       onStoreDocument: async ({ document, documentName }) => {
         const id = this.store.idFromDocName(documentName);
