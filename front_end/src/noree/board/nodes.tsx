@@ -14,10 +14,14 @@ function EditableTitle({ id, title, className }: { id: string; title: string; cl
 
   if (draft === null) {
     return (
-      <span className={`truncate ${className}`} onDoubleClick={(e) => {
+      <span
+        className={`truncate ${className}`}
+        onDoubleClick={(e) => {
           e.stopPropagation();
           setDraft(title);
-        }} title="Double-click to rename">
+        }}
+        title="Double-click to rename"
+      >
         {title}
       </span>
     );
@@ -44,38 +48,40 @@ function EditableTitle({ id, title, className }: { id: string; title: string; cl
   );
 }
 
-const HANDLE = "!h-2.5 !w-2.5 !border-2 !border-white !bg-stone-500 dark:!border-stone-900";
-
 export function BlockNode({ id, data, selected }: Props) {
   const { doc, peerSelections, sourceCounts } = useBoardContext();
-  const { Preview, label } = BLOCK_BY_TYPE[data.blockType];
-  const sticky = data.blockType === "sticky";
+  const { Preview, Icon, label } = BLOCK_BY_TYPE[data.blockType];
   const peerColor = peerSelections[id];
   const sources = sourceCounts[id] ?? 0;
   return (
     <>
-      <NodeResizer isVisible={selected} minWidth={140} minHeight={90} color="#78716c" />
-      <Handle type="target" position={Position.Left} className={HANDLE} />
+      <NodeResizer isVisible={selected} minWidth={160} minHeight={110} />
+      <Handle type="target" position={Position.Left} />
       <div
         data-block-type={data.blockType}
-        style={peerColor ? { boxShadow: `0 0 0 2px ${peerColor}` } : undefined}
-        className={`flex h-full w-full flex-col overflow-hidden rounded-lg border ${
-          selected ? "border-stone-900 dark:border-stone-100" : "border-stone-300 dark:border-stone-700"
-        } ${sticky ? "bg-amber-100 text-stone-900 dark:bg-amber-200" : "bg-white dark:bg-stone-900"}`}
+        data-selected={selected ? "true" : "false"}
+        style={peerColor ? { boxShadow: `0 0 0 2px ${peerColor}, var(--n-shadow-2)` } : undefined}
+        className="n-block"
       >
-        <header className="flex shrink-0 items-center gap-2 border-b border-black/10 px-3 py-1.5 dark:border-white/10">
-          <EditableTitle id={id} title={data.title} className="text-xs font-medium" />
-          <span className="ml-auto flex shrink-0 items-center gap-2 font-mono text-[10px] tracking-wider uppercase opacity-50">
-            {sources > 0 && <span data-source-count={sources}>{sources === 1 ? "1 source" : `${sources} sources`}</span>}
-            <span>{label}</span>
+        <header className="n-block__head">
+          <span className="n-block__icon" title={label}>
+            <Icon />
+          </span>
+          <EditableTitle id={id} title={data.title} className="n-block__title" />
+          <span className="n-block__meta">
+            {sources > 0 && (
+              <span data-source-count={sources} className="n-chip">
+                {sources === 1 ? "1 source" : `${sources} sources`}
+              </span>
+            )}
           </span>
         </header>
         <div className="min-h-0 flex-1">
           <ErrorBoundary
             fallback={(reset) => (
-              <div role="alert" className="nodrag flex h-full flex-col items-center justify-center gap-2 p-3 text-center text-xs text-stone-500">
+              <div role="alert" className="nodrag flex h-full flex-col items-center justify-center gap-2 p-3 text-center text-xs text-n-ink-3">
                 <p>This block couldn't be displayed.</p>
-                <button type="button" onClick={reset} className="rounded border border-stone-300 px-2 py-0.5 dark:border-stone-700">
+                <button type="button" onClick={reset} className="n-btn n-btn--outline n-btn--sm">
                   Try again
                 </button>
               </div>
@@ -85,32 +91,21 @@ export function BlockNode({ id, data, selected }: Props) {
           </ErrorBoundary>
         </div>
       </div>
-      <Handle type="source" position={Position.Right} className={HANDLE} />
+      <Handle type="source" position={Position.Right} />
     </>
   );
 }
 
 export function FrameNode({ id, data, selected }: Props) {
   const { hoverFrameId } = useBoardContext();
-  const hovered = hoverFrameId === id;
   return (
     <>
-      <NodeResizer isVisible={selected} minWidth={200} minHeight={140} color="#78716c" />
-      <div
-        data-block-type="frame"
-        className={`h-full w-full rounded-xl border-2 ${
-          hovered
-            ? "border-stone-900 bg-stone-900/10 dark:border-stone-100 dark:bg-stone-100/10"
-            : selected
-              ? "border-stone-700 bg-stone-500/5 dark:border-stone-300"
-              : "border-dashed border-stone-300 bg-stone-500/5 dark:border-stone-700"
-        }`}
-      >
-        <div className="absolute -top-6 left-1 flex max-w-full">
-          <EditableTitle id={id} title={data.title} className="font-mono text-xs tracking-wide text-stone-600 dark:text-stone-300" />
+      <NodeResizer isVisible={selected} minWidth={200} minHeight={140} />
+      <div data-block-type="frame" data-selected={selected ? "true" : "false"} data-hover={hoverFrameId === id ? "true" : "false"} className="n-frame">
+        <div className="n-frame__title">
+          <EditableTitle id={id} title={data.title} className="n-display" />
         </div>
       </div>
     </>
   );
 }
-

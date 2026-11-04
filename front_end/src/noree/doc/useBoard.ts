@@ -97,7 +97,7 @@ export function useBoard(doc: Y.Doc, actor: ActorRef) {
             id: e.id,
             source: e.source,
             target: e.target,
-            markerEnd: { type: MarkerType.ArrowClosed },
+            markerEnd: { type: MarkerType.ArrowClosed, color: "#3f8a5c" },
           },
       );
     });

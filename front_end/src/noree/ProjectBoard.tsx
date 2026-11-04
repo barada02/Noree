@@ -13,27 +13,48 @@ import { usePresence } from "./doc/usePresence";
 import { useProjectDoc } from "./doc/useProjectDoc";
 import { useUndo } from "./doc/useUndo";
 import { useYValue } from "./doc/useY";
+import { ReadView } from "./read/ReadView";
 import { AiPanel } from "./shell/AiPanel";
 import { Notice } from "./shell/Notice";
 import { ProjectSidebar } from "./shell/ProjectSidebar";
 import { TopBar, type BoardMode } from "./shell/TopBar";
-import { ReadView } from "./read/ReadView";
+import { ArrowRightIcon, ChevronIcon, FrameIcon, SparkIcon } from "./ui/icons";
+import { Mark } from "./ui/Mark";
 
-function BlockMenu({ onAdd }: { onAdd: (type: BlockType) => void }) {
+/** The dock that floats over the board, where blocks come from. */
+function Dock({ onAdd }: { onAdd: (type: BlockType) => void }) {
   return (
-    <div role="toolbar" aria-label="Add a block" className="flex w-16 shrink-0 flex-col items-center gap-1 border-r border-stone-200 bg-white py-3 dark:border-stone-800 dark:bg-stone-950">
+    <div role="toolbar" aria-label="Add a block" className="n-dock n-float">
       {BLOCKS.map((b) => (
-        <button
-          key={b.type}
-          type="button"
-          onClick={() => onAdd(b.type)}
-          aria-label={`Add ${b.label}`}
-          className="flex w-14 flex-col items-center gap-1 rounded-md py-2 text-stone-600 hover:bg-stone-100 hover:text-stone-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
-        >
-          {b.icon}
-          <span className="text-[10px] leading-none">{b.label}</span>
+        <button key={b.type} type="button" onClick={() => onAdd(b.type)} aria-label={`Add ${b.label}`} title={`${b.label}: ${b.hint}`}>
+          <b.Icon />
+          <span>{b.label}</span>
         </button>
       ))}
+    </div>
+  );
+}
+
+function EmptyBoard({ onAsk, onAddSlate }: { onAsk: () => void; onAddSlate: () => void }) {
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[1] grid place-items-center p-6">
+      <div className="n-panel n-rise pointer-events-auto max-w-md p-8 text-center">
+        <Mark tile size={44} className="mx-auto" />
+        <h2 className="n-display mt-4 text-[26px]">A fresh board</h2>
+        <p className="mt-2 text-[15px] leading-6 text-n-ink-2">
+          Ask the AI to plan something, or start with a block from the dock. Everything here is shared live with anyone you send the link to.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <button type="button" onClick={onAsk} className="n-btn n-btn--primary">
+            <SparkIcon />
+            Ask the AI
+          </button>
+          <button type="button" onClick={onAddSlate} className="n-btn n-btn--outline">
+            Add a Slate
+            <ArrowRightIcon />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -52,22 +73,23 @@ function FrameList({ doc, act }: { doc: Y.Doc; act: (action: unknown) => unknown
   if (!frames.length) return null;
   const move = (frameId: string, index: number) => act({ type: "frame.reorder", frameId, index });
   return (
-    <ul className="mb-1 ml-3 border-l border-stone-200 pl-1 dark:border-stone-800">
+    <ul className="mt-1 mb-2 ml-6 space-y-0.5 border-l border-n-line pl-2">
       {frames.map((f, i) => (
-        <li key={f.id} className="group flex items-center text-[13px]">
+        <li key={f.id} className="group flex items-center">
           <button
             type="button"
             onClick={() => void flow.fitView({ nodes: [{ id: f.id }], duration: 400, padding: 0.2, maxZoom: 1 })}
-            className="min-w-0 flex-1 truncate rounded px-2 py-1 text-left text-stone-600 hover:bg-stone-50 dark:text-stone-400 dark:hover:bg-stone-900"
+            className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg px-2 py-1 text-left text-[13px] text-n-ink-2 hover:bg-n-sunken hover:text-n-ink"
           >
-            {f.title}
+            <FrameIcon className="h-3.5 w-3.5 shrink-0 text-n-leaf" />
+            <span className="truncate">{f.title}</span>
           </button>
           <span className="flex opacity-0 group-focus-within:opacity-100 group-hover:opacity-100">
-            <button type="button" aria-label={`Move ${f.title} up`} disabled={i === 0} onClick={() => move(f.id, i - 1)} className="px-1 text-stone-500 disabled:opacity-30">
-              ↑
+            <button type="button" aria-label={`Move ${f.title} up`} disabled={i === 0} onClick={() => move(f.id, i - 1)} className="px-1 text-n-ink-3 hover:text-n-ink disabled:opacity-30">
+              <ChevronIcon className="h-3.5 w-3.5 -rotate-90" />
             </button>
-            <button type="button" aria-label={`Move ${f.title} down`} disabled={i === frames.length - 1} onClick={() => move(f.id, i + 1)} className="px-1 text-stone-500 disabled:opacity-30">
-              ↓
+            <button type="button" aria-label={`Move ${f.title} down`} disabled={i === frames.length - 1} onClick={() => move(f.id, i + 1)} className="px-1 text-n-ink-3 hover:text-n-ink disabled:opacity-30">
+              <ChevronIcon className="h-3.5 w-3.5 rotate-90" />
             </button>
           </span>
         </li>
@@ -113,38 +135,39 @@ function Workspace({ doc, provider, status, projectId }: WorkspaceProps) {
     undo.newStep();
   };
 
+  const askTheAi = () => {
+    setPanelOpen(true);
+    setTimeout(() => document.getElementById("n-ai-input")?.focus(), 80);
+  };
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-stone-50 text-stone-900 dark:bg-black dark:text-stone-100">
+    <div className="noree-app flex h-screen w-screen overflow-hidden">
       {/* While a block is open full screen, keyboard and screen readers stay inside it. */}
       <div inert={focused !== null} className="relative flex h-full min-w-0 flex-1">
-      <ProjectSidebar activeId={projectId}>
-        <FrameList doc={doc} act={board.act} />
-      </ProjectSidebar>
-      {mode === "board" && <BlockMenu onAdd={add} />}
-      <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar doc={doc} mode={mode} onModeChange={setMode} panelOpen={panelOpen} onTogglePanel={() => setPanelOpen((open) => !open)} projectId={projectId} status={status} presence={presence} undo={undo} />
-        <main className="relative min-h-0 flex-1">
-          <BoardCanvas
-            doc={doc}
-            projectId={projectId}
-            actor={actor}
-            board={board}
-            presence={presence}
-            onDragStart={undo.newStep}
-            paused={focused !== null}
-            onOpenBlock={(id, type) => {
-              if (BLOCK_BY_TYPE[type].hasFocus) setFocusId(id);
-            }}
-          />
-          {mode === "read" && <ReadView doc={doc} />}
-          {empty && mode === "board" && (
-            <p className="pointer-events-none absolute inset-x-0 top-1/3 text-center text-sm text-stone-500">
-              Add a block from the menu on the left to start.
-            </p>
-          )}
-        </main>
-      </div>
-      {mode === "board" && panelOpen && <AiPanel doc={doc} projectId={projectId} selectedIds={selectedIds} actor={actor} personName={presence.name} />}
+        <ProjectSidebar activeId={projectId}>
+          <FrameList doc={doc} act={board.act} />
+        </ProjectSidebar>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <TopBar doc={doc} mode={mode} onModeChange={setMode} panelOpen={panelOpen} onTogglePanel={() => setPanelOpen((open) => !open)} projectId={projectId} status={status} presence={presence} undo={undo} />
+          <main className="relative min-h-0 flex-1">
+            <BoardCanvas
+              doc={doc}
+              projectId={projectId}
+              actor={actor}
+              board={board}
+              presence={presence}
+              onDragStart={undo.newStep}
+              paused={focused !== null}
+              onOpenBlock={(id, type) => {
+                if (BLOCK_BY_TYPE[type].hasFocus) setFocusId(id);
+              }}
+            />
+            {mode === "board" && <Dock onAdd={add} />}
+            {mode === "read" && <ReadView doc={doc} />}
+            {empty && mode === "board" && <EmptyBoard onAsk={askTheAi} onAddSlate={() => add("slate")} />}
+          </main>
+        </div>
+        {mode === "board" && panelOpen && <AiPanel doc={doc} projectId={projectId} selectedIds={selectedIds} actor={actor} personName={presence.name} />}
       </div>
       {focused && focusedNode?.data.blockType === "slate" && (
         <SlateFocus doc={doc} id={focused} projectId={projectId} actor={actor} personName={presence.name} undo={undo} onClose={() => setFocusId(null)} />
@@ -163,8 +186,9 @@ export default function ProjectBoard({ projectId }: { projectId: string }) {
   }
   if (session.state === "opening") {
     return (
-      <div className="flex h-screen items-center justify-center font-mono text-xs tracking-widest text-stone-500 uppercase">
-        Opening project
+      <div className="noree-app flex h-screen flex-col items-center justify-center gap-4">
+        <Mark tile size={44} className="n-breathe" />
+        <p className="n-eyebrow">Opening project</p>
       </div>
     );
   }

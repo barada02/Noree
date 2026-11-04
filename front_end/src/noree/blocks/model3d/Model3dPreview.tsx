@@ -8,7 +8,7 @@ export function StatusBadge({ status }: { status: "approved" | "draft" }) {
     <span
       data-model-status={status}
       title={status === "draft" ? "This model did not pass review. It may look wrong." : "This model passed the sandbox test and review."}
-      className={`rounded px-1.5 py-0.5 font-mono text-[10px] tracking-wide uppercase ${status === "approved" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-900"}`}
+      className={status === "approved" ? "n-chip" : "n-chip n-chip--warn"}
     >
       {status === "approved" ? "Approved" : "Draft"}
     </span>
@@ -50,11 +50,11 @@ export function Model3dPreview({ doc, id }: { doc: Y.Doc; id: string }) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="relative min-h-0 flex-1 bg-stone-950">
+      <div className={`relative min-h-0 flex-1 ${preview ? "bg-stone-950" : "bg-n-sky/45"}`}>
         {preview ? (
           <img src={preview} alt={current?.brief ?? "Preview of the generated 3D model"} draggable={false} className="h-full w-full object-contain" />
         ) : (
-          <p className="flex h-full items-center justify-center px-3 text-center text-xs text-stone-400">
+          <p className={`flex h-full items-center justify-center px-4 text-center text-[13px] leading-5 ${current ? "text-n-ink-3" : "text-n-sky-ink"}`}>
             {current ? "No preview image. Double-click to view it in 3D." : model.connected ? "Press Generate to build this from what's connected." : "Describe a model, or draw a line from another block."}
           </p>
         )}
@@ -62,7 +62,7 @@ export function Model3dPreview({ doc, id }: { doc: Y.Doc; id: string }) {
           <span className="absolute top-1.5 left-1.5 flex gap-1">
             <StatusBadge status={current.status} />
             {outOfDate && !running && (
-              <span data-out-of-date title="What this was generated from has changed." className="rounded bg-orange-200 px-1.5 py-0.5 font-mono text-[10px] tracking-wide text-orange-950 uppercase">
+              <span data-out-of-date title="What this was generated from has changed." className="n-chip n-chip--warn">
                 Out of date
               </span>
             )}
@@ -83,13 +83,13 @@ export function Model3dPreview({ doc, id }: { doc: Y.Doc; id: string }) {
         <PromptInput
           value={model.prompt}
           onCommit={model.setPrompt}
-          className="nokey min-w-0 flex-1 rounded border border-stone-300 bg-transparent px-1.5 py-1 text-xs outline-none focus:border-stone-500 dark:border-stone-700"
+          className="n-field min-w-0 flex-1 !rounded-xl !px-2.5 !py-1.5 !text-[13px]"
         />
         <button
           type="button"
           disabled={!model.canGenerate}
           onClick={() => void model.generate()}
-          className="shrink-0 rounded bg-stone-900 px-2 py-1 text-xs font-medium text-white disabled:opacity-40 dark:bg-stone-100 dark:text-stone-900"
+          className="n-btn n-btn--primary n-btn--sm shrink-0"
         >
           {running ? "Working" : current ? "Regenerate" : "Generate"}
         </button>

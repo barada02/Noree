@@ -243,14 +243,13 @@ export function SlateFocus({ doc, id, projectId, actor, personName, undo, onClos
 
   const hasContent = strokes.length > 0 || pastes.length > 0;
   const hasAi = objects.length > 0;
-  const buttonBase = "rounded-md border border-stone-300 px-2.5 py-1 text-xs hover:bg-stone-100 disabled:opacity-40 dark:border-stone-700 dark:hover:bg-stone-800";
-  const toolButton = (value: Tool) =>
-    `${buttonBase} ${tool === value ? "bg-stone-900 text-white hover:bg-stone-900 dark:bg-stone-100 dark:text-stone-900 dark:hover:bg-stone-100" : ""}`;
+  const buttonBase = "n-btn n-btn--outline n-btn--sm";
+  const toolButton = (value: Tool) => (tool === value ? `${buttonBase} !border-n-moss` : buttonBase);
 
   return (
-    <div role="dialog" aria-label={`${blockTitle}, focus mode`} className="fixed inset-0 z-50 flex flex-col bg-stone-100 text-stone-900 dark:bg-stone-950 dark:text-stone-100">
-      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-stone-200 bg-white px-3 py-2 dark:border-stone-800 dark:bg-stone-900">
-        <span className="mr-1 max-w-48 truncate text-sm font-medium">{blockTitle}</span>
+    <div role="dialog" aria-label={`${blockTitle}, focus mode`} className="fixed inset-0 z-50 flex flex-col bg-n-bg text-n-ink">
+      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-n-line-soft bg-n-surface/90 px-4 py-2.5 backdrop-blur">
+        <span className="n-display mr-2 max-w-56 truncate text-[19px]">{blockTitle}</span>
         <button type="button" className={toolButton("pen")} aria-pressed={tool === "pen"} onClick={() => setTool("pen")}>
           Pen
         </button>
@@ -270,7 +269,7 @@ export function SlateFocus({ doc, id, projectId, actor, personName, undo, onClos
           <button type="button" className={buttonBase} aria-label="Previous page" disabled={index === 0} onClick={() => goToPage(-1)}>
             ←
           </button>
-          <span data-page-indicator className="font-mono text-xs tabular-nums">
+          <span data-page-indicator className="text-[13px] font-semibold tabular-nums">
             {index + 1} / {count}
           </span>
           <button type="button" className={buttonBase} aria-label="Next page" disabled={index >= count - 1} onClick={() => goToPage(1)}>
@@ -285,7 +284,7 @@ export function SlateFocus({ doc, id, projectId, actor, personName, undo, onClos
             aria-label="Model"
             value={provider}
             onChange={(e) => setProvider(e.target.value as "baseten" | "meta")}
-            className="rounded-md border border-stone-300 bg-transparent px-1.5 py-1 text-xs dark:border-stone-700"
+            className="n-field !w-auto !rounded-full !px-3 !py-1.5 !text-[13px]"
           >
             <option value="baseten">Open weights, Baseten</option>
             <option value="meta">Meta API</option>
@@ -299,10 +298,10 @@ export function SlateFocus({ doc, id, projectId, actor, personName, undo, onClos
             maxLength={2000}
             aria-label="Instruction for the AI"
             placeholder="Optional: tell the AI what to do"
-            className="w-56 rounded-md border border-stone-300 bg-transparent px-2 py-1 text-xs outline-none focus:border-stone-500 dark:border-stone-700"
+            className="n-field !w-64 !rounded-full !px-3.5 !py-1.5 !text-[13px]"
           />
           {running ? (
-            <button type="button" onClick={() => void cancelJob(projectId, latestJob.id)} className="rounded-md bg-stone-600 px-3 py-1 text-xs font-medium text-white">
+            <button type="button" onClick={() => void cancelJob(projectId, latestJob.id)} className="n-btn n-btn--soft n-btn--sm">
               Stop
             </button>
           ) : (
@@ -310,7 +309,7 @@ export function SlateFocus({ doc, id, projectId, actor, personName, undo, onClos
               type="button"
               disabled={!hasContent || starting}
               onClick={() => void ask()}
-              className="rounded-md bg-orange-700 px-3 py-1 text-xs font-medium text-white disabled:opacity-40"
+              className="n-btn n-btn--primary n-btn--sm"
             >
               {starting ? "Starting" : "Ask AI"}
             </button>
@@ -321,17 +320,17 @@ export function SlateFocus({ doc, id, projectId, actor, personName, undo, onClos
         </span>
       </header>
       {error && (
-        <p role="alert" className="shrink-0 bg-red-50 px-3 py-1.5 text-xs text-red-800 dark:bg-red-950 dark:text-red-200">
+        <p role="alert" className="shrink-0 bg-n-danger-soft px-3 py-1.5 text-xs text-n-danger">
           {error}
         </p>
       )}
       <div className="flex min-h-0 flex-1 gap-3 p-3">
-        <main className="slate-scope relative min-w-0 flex-1 overflow-hidden rounded-xl border border-stone-300 bg-white dark:border-stone-700">
+        <main className="slate-scope relative min-w-0 flex-1 overflow-hidden rounded-2xl border border-n-line-soft bg-n-surface shadow-[var(--n-shadow-1)]">
           <WidgetStateProvider map={types.widgetValues}>
             <SlatePageCanvas strokes={strokes} objects={objects} pastes={pastes} tool={tool} onAddStroke={addStroke} onEraseStroke={eraseStroke} onMovePaste={movePaste} />
           </WidgetStateProvider>
           {!hasContent && !hasAi && (
-            <p className="pointer-events-none absolute inset-x-0 bottom-6 text-center text-sm text-stone-500">
+            <p className="pointer-events-none absolute inset-x-0 bottom-6 text-center text-sm text-n-ink-3">
               Write something, or paste text or an image, then press Ask AI.
             </p>
           )}

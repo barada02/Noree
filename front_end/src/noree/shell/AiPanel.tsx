@@ -6,6 +6,8 @@ import { isStale, useBlockJobs, useThreadJobs, type JobView } from "../doc/useJo
 import { useYValue } from "../doc/useY";
 import { cancelJob, startAgent, undoAgentRun } from "../lib/api";
 import { renderRich } from "../lib/rich";
+import { SendIcon, SparkIcon } from "../ui/icons";
+import { Mark } from "../ui/Mark";
 
 type Props = {
   doc: Y.Doc;
@@ -37,6 +39,9 @@ const READS = new Set(["read_board", "read_block"]);
 /** Block ids help the model and mean nothing to people. */
 const withoutIds = (note: string) => note.replace(/\s*\[[a-f0-9]{16,}\]/g, "");
 
+const BOARD_STARTERS = ["Plan a launch for a coffee shop app", "Set up a study board on complex numbers", "Plan a three day trip", "Summarize what's on the board"];
+const BLOCK_STARTERS = ["Summarize this", "What's missing here?", "Suggest next steps", "Turn this into a checklist"];
+
 function Conversation({ messages, activity }: { messages: Message[]; activity: string | null }) {
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -45,20 +50,24 @@ function Conversation({ messages, activity }: { messages: Message[]; activity: s
 
   if (!messages.length && !activity) return null;
   return (
-    <ol className="space-y-3" aria-live="polite">
+    <ol className="space-y-4" aria-live="polite">
       {messages.map((m) => (
-        <li key={m.id} data-message={m.role}>
-          <p className="mb-0.5 text-[11px] font-medium text-stone-500">{m.author.name}</p>
+        <li key={m.id} data-message={m.role} className={m.role === "assistant" ? "" : "flex flex-col items-end"}>
+          <p className="mb-1 flex items-center gap-1.5 text-[11.5px] font-semibold text-n-ink-3">
+            {m.role === "assistant" && <Mark size={14} />}
+            {m.author.name}
+          </p>
           {m.role === "assistant" ? (
             // renderRich escapes its input, so model text can't inject markup.
-            <div className="rounded-lg bg-stone-100 px-2.5 py-1.5 text-[13px] leading-5 break-words dark:bg-stone-800" dangerouslySetInnerHTML={{ __html: renderRich(m.text) }} />
+            <div className="rounded-2xl rounded-tl-md bg-n-sunken px-3.5 py-2.5 text-[14px] leading-6 break-words" dangerouslySetInnerHTML={{ __html: renderRich(m.text) }} />
           ) : (
-            <p className="text-[13px] leading-5 break-words whitespace-pre-wrap">{m.text}</p>
+            <p className="max-w-[92%] rounded-2xl rounded-tr-md bg-n-moss px-3.5 py-2.5 text-[14px] leading-6 break-words whitespace-pre-wrap text-n-on-moss">{m.text}</p>
           )}
         </li>
       ))}
       {activity && (
-        <li data-agent-activity className="animate-pulse text-xs text-stone-500">
+        <li data-agent-activity className="n-breathe flex items-center gap-2 text-[13px] text-n-ink-3">
+          <Mark size={14} />
           {activity}…
         </li>
       )}
@@ -70,11 +79,11 @@ function Conversation({ messages, activity }: { messages: Message[]; activity: s
 function RunDetails({ job }: { job: JobView }) {
   if (!job.steps.length) return null;
   return (
-    <details className="mt-2 text-xs text-stone-500">
-      <summary className="cursor-pointer select-none">What it did ({job.steps.length})</summary>
-      <ol className="mt-1 space-y-1">
+    <details className="mt-3 text-xs text-n-ink-3">
+      <summary className="cursor-pointer select-none font-medium">What it did ({job.steps.length})</summary>
+      <ol className="mt-2 space-y-1.5 border-l border-n-line pl-3">
         {job.steps.map((step, i) => (
-          <li key={i} className={step.status === "fail" ? "text-red-700 dark:text-red-400" : ""}>
+          <li key={i} className={step.status === "fail" ? "text-n-danger" : ""}>
             {label(step.title)}
             {step.note && !READS.has(step.title) && <span className="block break-words opacity-80">{withoutIds(step.note)}</span>}
           </li>
@@ -93,6 +102,7 @@ function Chat({ doc, projectId, threadId, focusBlockId, actor, personName }: { d
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [undoing, setUndoing] = useState(false);
+  const input = useRef<HTMLTextAreaElement>(null);
 
   const messages = useYValue([parts.threads as never], () => parts.threads.get(threadId)?.toArray() ?? []);
   const sources = useYValue([parts.edges as never, parts.blocks as never], () => {
@@ -172,82 +182,104 @@ function Chat({ doc, projectId, threadId, focusBlockId, actor, personName }: { d
   const failed = running ? null : latest?.status === "failed" ? latest.error : latest && isStale(latest, now) ? "This run stopped responding. Try again." : null;
   const undoable = !running && mainJob?.undo?.length && !mainJob.undone ? mainJob : null;
   const empty = !messages.length && !running;
+  const starters = focusBlockId ? BLOCK_STARTERS : BOARD_STARTERS;
 
   return (
     <>
       {focusBlockId && (
-        <div className="border-b border-stone-200 px-3 py-2 text-xs dark:border-stone-800" data-sources={sources.length}>
+        <div className="border-b border-n-line-soft px-4 py-2.5 text-xs" data-sources={sources.length}>
           {sources.length ? (
             <p>
-              <span className="text-stone-500">Reads from </span>
-              <span className="font-medium">{sources.join(", ")}</span>
+              <span className="text-n-ink-3">Reads from </span>
+              <span className="font-semibold">{sources.join(", ")}</span>
             </p>
           ) : (
-            <p className="text-stone-500">Draw a line from another block to give the AI more context.</p>
+            <p className="text-n-ink-3">Draw a line from another block to give the AI more context.</p>
           )}
         </div>
       )}
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
         {empty && (
-          <p className="text-sm text-stone-500">
-            {focusBlockId
-              ? "Ask about this block, or tell the AI what to do with it. Everyone on the board sees this conversation."
-              : "Ask about the board, or tell the AI what to do. It can add and connect blocks, and use its Slate and 3D specialists. Try: plan a launch for a coffee shop app."}
-          </p>
+          <div className="n-rise">
+            <p className="text-[14.5px] leading-6 text-n-ink-2">
+              {focusBlockId
+                ? "Ask about this block, or tell the AI what to do with it. Everyone on the board sees this conversation."
+                : "Ask about the board, or tell the AI what to do. It can add and connect blocks, and use its Slate and 3D specialists."}
+            </p>
+            <p className="n-eyebrow mt-5 mb-2">Try</p>
+            <ul className="flex flex-wrap gap-2">
+              {starters.map((text) => (
+                <li key={text}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDraft(text);
+                      input.current?.focus();
+                    }}
+                    className="rounded-2xl border border-n-line bg-n-surface px-3 py-1.5 text-left text-[13px] leading-5 text-n-ink-2 transition-colors hover:border-n-leaf hover:bg-n-leaf-soft hover:text-n-moss"
+                  >
+                    {text}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
         <Conversation messages={messages} activity={running ? (lastStep ? label(lastStep) : "Thinking") : null} />
         {failed && (
-          <p role="alert" className="mt-3 text-xs text-red-700 dark:text-red-400">
+          <p role="alert" className="mt-3 rounded-xl bg-n-danger-soft px-3 py-2 text-xs leading-5 text-n-danger">
             {failed}
           </p>
         )}
         {busyElsewhere && (
-          <p data-agent-busy className="mt-3 text-xs text-stone-500">
+          <p data-agent-busy className="mt-3 text-xs leading-5 text-n-ink-3">
             The AI is working on another request on this board. You can ask here when it finishes.
           </p>
         )}
         {undoable && (
-          <button type="button" disabled={undoing} onClick={() => void undo(undoable.id)} className="mt-2 rounded-md border border-stone-300 px-2 py-1 text-xs hover:bg-stone-100 disabled:opacity-50 dark:border-stone-700 dark:hover:bg-stone-800">
+          <button type="button" disabled={undoing} onClick={() => void undo(undoable.id)} className="n-btn n-btn--outline n-btn--sm mt-3">
             {undoing ? "Undoing" : "Undo these changes"}
           </button>
         )}
         {mainJob && <RunDetails job={mainJob} />}
       </div>
       <form
-        className="border-t border-stone-200 p-2 dark:border-stone-800"
+        className="border-t border-n-line-soft p-3"
         onSubmit={(e) => {
           e.preventDefault();
           void send();
         }}
       >
         {error && (
-          <p role="alert" className="mb-1.5 text-xs text-red-700 dark:text-red-400">
+          <p role="alert" className="mb-2 text-xs text-n-danger">
             {error}
           </p>
         )}
-        <textarea
-          value={draft}
-          rows={2}
-          maxLength={4000}
-          aria-label="Ask the AI"
-          placeholder={focusBlockId ? "Ask about this block" : "Ask, or tell it what to do"}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              void send();
-            }
-          }}
-          className="w-full resize-none rounded-md border border-stone-300 bg-transparent px-2 py-1.5 text-[13px] outline-none focus:border-stone-500 dark:border-stone-700"
-        />
-        <div className="mt-1.5 flex justify-end gap-2">
+        <div className="flex items-end gap-2 rounded-2xl border border-n-line bg-n-surface p-2 pl-3.5 transition-shadow focus-within:border-n-leaf focus-within:shadow-[0_0_0_3px_var(--n-leaf-ring)]">
+          <textarea
+            id="n-ai-input"
+            ref={input}
+            value={draft}
+            rows={2}
+            maxLength={4000}
+            aria-label="Ask the AI"
+            placeholder={focusBlockId ? "Ask about this block" : "Ask, or tell it what to do"}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                void send();
+              }
+            }}
+            className="max-h-40 min-h-10 flex-1 resize-none bg-transparent py-1.5 text-[14px] leading-5 outline-none placeholder:text-n-ink-3"
+          />
           {running && current && (
-            <button type="button" onClick={() => void cancelJob(projectId, (active.find((job) => job.kind === "main") ?? current).id)} className="rounded-md border border-stone-300 px-2.5 py-1 text-xs dark:border-stone-700">
+            <button type="button" onClick={() => void cancelJob(projectId, (active.find((job) => job.kind === "main") ?? current).id)} className="n-btn n-btn--soft n-btn--sm">
               Stop
             </button>
           )}
-          <button type="submit" disabled={!draft.trim() || sending || running || busyElsewhere} className="rounded-md bg-stone-900 px-3 py-1 text-xs font-medium text-white disabled:opacity-40 dark:bg-stone-100 dark:text-stone-900">
-            Ask
+          <button type="submit" aria-label="Ask" title="Send (Enter)" disabled={!draft.trim() || sending || running || busyElsewhere} className="n-btn n-btn--primary n-btn--icon shrink-0">
+            <SendIcon />
           </button>
         </div>
       </form>
@@ -271,8 +303,16 @@ function PanelContent({ doc, projectId, actor, personName, only }: Props & { onl
   });
 
   return (
-    <aside aria-label="AI panel" className="absolute top-11 right-0 bottom-0 z-20 flex w-80 max-w-full shrink-0 flex-col border-l border-stone-200 bg-white lg:static dark:border-stone-800 dark:bg-stone-950">
-      <h2 className="truncate border-b border-stone-200 px-3 py-2 text-sm font-medium dark:border-stone-800">{selected ? selected.title : "AI"}</h2>
+    <aside aria-label="AI panel" className="absolute top-14 right-0 bottom-0 z-20 flex w-[22rem] max-w-full shrink-0 flex-col border-l border-n-line-soft bg-n-surface shadow-[var(--n-shadow-2)] lg:static lg:shadow-none">
+      <div className="flex items-center gap-2.5 border-b border-n-line-soft px-4 py-3">
+        <span className="grid h-8 w-8 place-items-center rounded-xl bg-n-leaf-soft text-n-moss">
+          <SparkIcon className="h-[18px] w-[18px]" />
+        </span>
+        <div className="min-w-0">
+          <h2 className="truncate text-[15px] leading-tight font-semibold">{selected ? selected.title : "AI"}</h2>
+          <p className="text-xs text-n-ink-3">{selected ? "Starting from this block" : "Working with the whole board"}</p>
+        </div>
+      </div>
       {/* The key gives each conversation its own draft and scroll position. */}
       <Chat key={selected?.id ?? BOARD_THREAD} doc={doc} projectId={projectId} threadId={selected?.id ?? BOARD_THREAD} focusBlockId={selected?.id ?? null} actor={actor} personName={personName} />
     </aside>

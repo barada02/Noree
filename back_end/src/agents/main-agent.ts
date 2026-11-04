@@ -2,7 +2,7 @@ import * as Y from 'yjs';
 import { z } from 'zod';
 import type { JobContext } from '../jobs/jobs.service.js';
 import { applyAction } from '../shared/actions.js';
-import { placeFrame, placeInFrame, placeLoose } from '../shared/layout.js';
+import { fitAndReflowFrames, placeFrame, placeInFrame, placeLoose } from '../shared/layout.js';
 import { docParts, readEdge, readLayout, type ActorRef, type Message } from '../shared/schema.js';
 import { createTranscriber } from './chat.js';
 import { collectContext, documentOf, readBlock, type BlockContext, type Transcriber } from './context.js';
@@ -125,6 +125,8 @@ export function applyUndo(doc: Y.Doc, steps: UndoStep[], person: ActorRef) {
 type ToolContext = SubagentContext & {
   transcribe: Transcriber;
   createdBlocks: { count: number };
+  /** Frames made in this run, which are fitted to their contents at the end. */
+  createdFrames: string[];
   recordUndo: (step: UndoStep) => Promise<void>;
 };
 
@@ -164,6 +166,7 @@ const BOARD_TOOLS: AgentTool<ToolContext>[] = [
       if (!roomForMore(context)) return { ok: false, result: TOO_MANY };
       const { id } = act(context.doc, { type: 'block.add', blockType: 'frame', title: args.title, at: placeFrame(context.doc) });
       context.createdBlocks.count++;
+      context.createdFrames.push(id!);
       await context.recordUndo({ type: 'delete-block', id: id! });
       return { ok: true, result: `Added frame [${id}].` };
     },
@@ -337,6 +340,7 @@ export async function runMainAgentJob(context: JobContext, input: MainAgentInput
     signal,
     transcribe,
     createdBlocks: { count: 0 },
+    createdFrames: [],
     recordUndo: async (step) => {
       undoSteps.push(step);
       await context.update((job) => job.set('undo', [...undoSteps]));
@@ -370,6 +374,9 @@ export async function runMainAgentJob(context: JobContext, input: MainAgentInput
       reason = event.reason;
     }
   }
+
+  // Frames were placed when they were bigger than their contents, so tidy them before anyone looks.
+  fitAndReflowFrames(doc, toolContext.createdFrames);
 
   if (reason === 'aborted') return;
   if (reason === 'failed') {

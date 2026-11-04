@@ -39,11 +39,11 @@ export function onProjectsChanged(listener: () => void): () => void {
   return () => window.removeEventListener(EVENT, listener);
 }
 
-export async function createProject(): Promise<string> {
+export async function createProject(title?: string): Promise<string> {
   const res = await fetch("/api/projects", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: "{}",
+    body: JSON.stringify(title ? { title } : {}),
   });
   if (!res.ok) throw new Error(res.status === 429 ? "Too many new projects right now. Try again later." : "Couldn't create the project.");
   return ((await res.json()) as { id: string }).id;

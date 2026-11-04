@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./noree/tokens.css";
 
 /* Let Tailwind generate the utilities used inside BlockNote's shadcn UI. */
 @source "../node_modules/@blocknote/shadcn";

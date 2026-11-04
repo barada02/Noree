@@ -29,7 +29,7 @@ async function dragTo(locator, x, y) {
 }
 
 await page.goto(`${base}/#/app`);
-await page.getByText('Plan together with AI').waitFor({ timeout: 8000 });
+await page.getByText('What are you planning?').first().waitFor({ timeout: 8000 });
 check('project list shows empty state', true);
 
 await page.getByRole('button', { name: 'New project', exact: true }).first().click();
@@ -98,7 +98,7 @@ const saved = await positions();
 if (shots) await page.screenshot({ path: `${shots}/m1-board.png` });
 
 // Second project.
-await page.getByRole('button', { name: '+ New project' }).click();
+await page.getByRole('button', { name: 'New project', exact: true }).first().click();
 await page.waitForFunction((u) => location.href !== u, firstUrl);
 await page.waitForSelector('[aria-label="Project name"]');
 await page.getByLabel('Project name').fill('Trip');

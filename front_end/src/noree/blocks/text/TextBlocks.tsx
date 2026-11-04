@@ -12,9 +12,9 @@ function TextContent({ doc, id, placeholder, className }: BlockProps & { placeho
 }
 
 export function TextPreview(props: BlockProps) {
-  return <TextContent {...props} placeholder="Write something" className="px-3 py-2 text-sm leading-6" />;
+  return <TextContent {...props} placeholder="Write something" className="px-4 py-3 text-[15px] leading-6" />;
 }
 
 export function StickyPreview(props: BlockProps) {
-  return <TextContent {...props} placeholder="Quick note" className="px-3 py-2 text-[15px] leading-6" />;
+  return <TextContent {...props} placeholder="Quick note" className="px-4 py-3 text-[15.5px] leading-6" />;
 }
