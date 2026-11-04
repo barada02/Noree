@@ -1,5 +1,5 @@
-import { env } from '../env'
-import { postJson, type Msg, type Provider, type StepResult, type ToolCall, type ToolSpec } from './types'
+import { env } from '../env.js'
+import { postJson, type Msg, type Provider, type StepResult, type ToolCall, type ToolSpec } from './types.js'
 
 /** Meta Model API (Responses API). Muse Spark 1.x: vision + function calling, tool_choice "auto" only. */
 export function metaProvider(): Provider {

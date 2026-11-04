@@ -1,4 +1,4 @@
-import type { Pt, Rect } from '../../shared/protocol'
+import type { Pt, Rect } from '../../shared/protocol.js'
 
 export function bboxOfPoints(pts: Pt[]): Rect {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity

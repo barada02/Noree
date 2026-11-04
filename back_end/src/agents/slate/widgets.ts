@@ -1,5 +1,5 @@
-import type { GraphParam, WidgetSpec } from '../../shared/protocol'
-import { compileExpr } from '../../shared/expr'
+import type { GraphParam, WidgetSpec } from '../../shared/protocol.js'
+import { compileExpr } from '../../shared/expr.js'
 
 export interface Built {
   spec?: WidgetSpec

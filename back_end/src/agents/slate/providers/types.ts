@@ -1,4 +1,4 @@
-import type { ProviderId } from '../../../shared/protocol'
+import type { ProviderId } from '../../../shared/protocol.js'
 
 export interface ToolSpec {
   name: string

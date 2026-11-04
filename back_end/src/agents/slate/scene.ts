@@ -1,6 +1,6 @@
-import type { AiObject, ClusterInfo, Rect, RunRequest } from '../../shared/protocol'
-import { clusterStrokes } from './cluster'
-import { contains, intersects } from './geometry'
+import type { AiObject, ClusterInfo, Rect, RunRequest } from '../../shared/protocol.js'
+import { clusterStrokes } from './cluster.js'
+import { contains, intersects } from './geometry.js'
 
 export const MARGIN = 24
 

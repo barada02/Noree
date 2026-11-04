@@ -1,11 +1,11 @@
 import { create, all } from 'mathjs'
-import type { AiObject, Rect } from '../../shared/protocol'
-import { enclosingEllipse, inflate, intersects } from './geometry'
+import type { AiObject, Rect } from '../../shared/protocol.js'
+import { enclosingEllipse, inflate, intersects } from './geometry.js'
 import {
   TEXTBOX_W, WIDGET_W, Scene, boxAtTip, clampToWorld, estimateTextBoxHeight, fits, objectRect, type Dir,
-} from './scene'
-import type { ToolSpec } from './providers/types'
-import { WIDGET_NEED, buildArgand, buildCards, buildGraph, buildSteps, type Built, type RoomFor } from './widgets'
+} from './scene.js'
+import type { ToolSpec } from './providers/types.js'
+import { WIDGET_NEED, buildArgand, buildCards, buildGraph, buildSteps, type Built, type RoomFor } from './widgets.js'
 
 export interface ToolOutcome {
   ok: boolean

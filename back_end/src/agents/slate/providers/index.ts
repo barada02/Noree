@@ -1,8 +1,8 @@
-import type { HealthResponse, ProviderId } from '../../../shared/protocol'
-import { env } from '../env'
-import { basetenProvider } from './baseten'
-import { metaProvider } from './meta'
-import type { Provider } from './types'
+import type { HealthResponse, ProviderId } from '../../../shared/protocol.js'
+import { env } from '../env.js'
+import { basetenProvider } from './baseten.js'
+import { metaProvider } from './meta.js'
+import type { Provider } from './types.js'
 
 export function isConfigured(id: ProviderId): boolean {
   return id === 'meta' ? !!env.metaKey : !!env.basetenKey

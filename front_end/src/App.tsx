@@ -14,6 +14,7 @@ const BlockNoteExperiment = lazy(
 const FlowExperiment = lazy(
   () => import("./experiments/reactflow/FlowExperiment"),
 );
+const NoreeApp = lazy(() => import("./noree/NoreeApp"));
 const KonvaExperiment = lazy(
   () => import("./experiments/konva/KonvaExperiment"),
 );
@@ -33,6 +34,17 @@ function App() {
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
+
+  // The product
+  if (route === "app" || route.startsWith("p/")) {
+    return (
+      <ThemeProvider>
+        <Suspense fallback={null}>
+          <NoreeApp projectId={route === "app" ? null : route.slice(2)} />
+        </Suspense>
+      </ThemeProvider>
+    );
+  }
 
   // Standalone pages (no experiment sidebar)
   if (route === "") {

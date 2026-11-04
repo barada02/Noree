@@ -42,6 +42,16 @@ if ! grep -q 'connection_upgrade' "$NGINX_CONF"; then
   fi
 fi
 
+# nginx allows only 1 MB by default. A separate file, because certbot manages noree.conf.
+# Slightly above the app's 10 MB upload limit, so the app is what reports oversized files.
+echo 'client_max_body_size 12m;' > /etc/nginx/conf.d/noree-upload.conf
+if nginx -t; then
+  systemctl reload nginx
+else
+  rm -f /etc/nginx/conf.d/noree-upload.conf
+  echo "nginx upload limit rejected; removed" >&2
+fi
+
 sudo -iu "$APP_USER" bash -c "cd $API_DIR && npm ci --omit=dev && pm2 startOrReload ecosystem.config.cjs --update-env && pm2 save"
 
 # Health check against the app itself (and its Socket.IO endpoint). Not via nginx on :80:

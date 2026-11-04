@@ -1,7 +1,7 @@
-import type { AgentEvent, RunRequest } from '../../shared/protocol'
-import type { Msg, Provider } from './providers/types'
-import { Scene } from './scene'
-import { TOOLS, executeTool } from './tools'
+import type { AgentEvent, RunRequest } from '../../shared/protocol.js'
+import type { Msg, Provider } from './providers/types.js'
+import { Scene } from './scene.js'
+import { TOOLS, executeTool } from './tools.js'
 
 const MAX_STEPS = 10
 

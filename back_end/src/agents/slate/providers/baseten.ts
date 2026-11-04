@@ -1,5 +1,5 @@
-import { env } from '../env'
-import { postJson, type Msg, type Provider, type StepResult, type ToolCall, type ToolSpec } from './types'
+import { env } from '../env.js'
+import { postJson, type Msg, type Provider, type StepResult, type ToolCall, type ToolSpec } from './types.js'
 
 /** Baseten serverless inference of the open-weight Muse Spark Open (OpenAI-compatible chat completions). */
 export function basetenProvider(): Provider {

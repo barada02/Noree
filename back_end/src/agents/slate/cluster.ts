@@ -1,5 +1,5 @@
-import type { ClusterInfo, Stroke } from '../../shared/protocol'
-import { bboxOfPoints, gap, union } from './geometry'
+import type { ClusterInfo, Stroke } from '../../shared/protocol.js'
+import { bboxOfPoints, gap, union } from './geometry.js'
 
 /**
  * Group strokes that are close together (letters of one expression, parts of one drawing) into
